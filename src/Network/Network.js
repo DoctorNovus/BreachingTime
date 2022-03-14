@@ -50,6 +50,24 @@ export class Network extends Singleton {
                         player.move(data.x, data.y, data.direction);
                     break;
 
+                case "loadMap":
+                    instanced.loadMap(data.map);
+                    break;
+
+                case "playerLeave":
+                    player = BaseGame.instance.findObject(data.name);
+                    if (player)
+                        player.destroy();
+                    break;
+
+                case "setChange":
+                    BaseGame.instance.updates.set(data.x, data.y, data);
+                    break;
+
+                case "deleteBlock":
+                    instanced.deleteBlock(data);
+                    break;
+                    
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;

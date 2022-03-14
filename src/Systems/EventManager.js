@@ -17,6 +17,34 @@ export class EventManager extends Singleton {
             InputSystem
         ]);
 
+        EventManager.instance.blocks = [
+            {
+                key: "dirt",
+                type: "single",
+            },
+            {
+                key: "portal_sequence",
+                type: "spritesheet",
+                frameWidth: 32,
+                frameHeight: 32,
+            },
+            {
+                key: "cracked1",
+                type: "single",
+                overlay: true,
+            },
+            {
+                key: "cracked2",
+                type: "single",
+                overlay: true,
+            },
+            {
+                key: "cracked3",
+                type: "single",
+                overlay: true,
+            }
+        ];
+
         EventManager.instance.animations = [
             {
                 key: "idle",

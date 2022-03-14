@@ -21,6 +21,23 @@ export class GameScene extends Phaser.Scene {
                 this.load.image(anim.frames[j], `assets/animations/${anim.key}/${anim.frames[j]}.png`);
             }
         }
+
+        for (let i = 0; i < EventManager.instance.blocks.length; i++) {
+            let block = EventManager.instance.blocks[i];
+            let area = block.overlay ? "overlays" : "blocks";
+            if (block.type === "single") {
+                this.load.image(block.key, `assets/${area}/${block.key}.png`);
+            } else if (block.type === "spritesheet") {
+                this.load.spritesheet(block.key, `assets/${area}/${block.key}.png`, {
+                    frameWidth: block.frameWidth,
+                    frameHeight: block.frameHeight
+                });
+            } else {
+                for (let j = 0; j < block.frames.length; j++) {
+                    this.load.image(block.frames[j], `assets/${area}/${block.key}/${block.frames[j]}.png`);
+                }
+            }
+        }
     }
 
     create() {
@@ -35,6 +52,26 @@ export class GameScene extends Phaser.Scene {
                 frameRate: 10,
                 repeat: -1
             });
+        }
+
+        for (let i = 0; i < EventManager.instance.blocks.length; i++) {
+            let block = EventManager.instance.blocks[i];
+            if (block.type === "spritesheet") {
+                let frames = this.anims.generateFrameNames(block.key);
+                BaseGame.instance.anims[block.key] = this.anims.create({
+                    key: `${block.key}_anim`,
+                    frames,
+                    frameRate: 10,
+                    repeat: -1
+                });
+            } else if (block.type == "multi") {
+                BaseGame.instance.anims[block.key] = this.anims.create({
+                    key: `${block.key}_anim`,
+                    frames: block.frames.map(an => ({ key: an })),
+                    frameRate: 10,
+                    repeat: -1
+                });
+            }
         }
 
         BaseGame.instance.setCamera(this.cameras.main, 1.5);
@@ -142,6 +179,42 @@ export class GameScene extends Phaser.Scene {
                     break;
             }
         });
+
+        this.input.on("pointerdown", (pointer) => {
+            // let { worldX, worldY } = pointer;
+            // worldX = Math.floor(worldX / 32) * 32;
+            // worldY = Math.floor(worldY / 32) * 32;
+            // console.log(worldX, worldY);
+
+            let instancedBlock = BaseGame.instance.instancedBlock;
+
+            switch (pointer.button) {
+                // Left
+                case 0:
+                    Network.instance.send({
+                        type: "leftInteract",
+                        data: {
+                            name: instancedBlock.name,
+                            x: instancedBlock.x,
+                            y: instancedBlock.y
+                        }
+                    });
+                    break;
+
+                // Right
+
+                case 2:
+                    Network.instance.send({
+                        type: "rightInteract",
+                        data: {
+                            name: instancedBlock.name,
+                            x: instancedBlock.x,
+                            y: instancedBlock.y
+                        }
+                    });
+                    break;
+            }
+        })
     }
 
     update() {
@@ -152,6 +225,63 @@ export class GameScene extends Phaser.Scene {
         for (let entity of base.objects.entities) {
             if (entity) {
 
+            }
+        }
+
+        if (base.map && !base.loadedMap) {
+            console.log(`Loading map with ${base.map.tiles.length} tiles`)
+            for (let x = 0; x < base.map.tiles.length; x++) {
+                let block = base.map.tiles[x];
+                if (block) {
+                    if (block.health <= 0)
+                        return;
+
+                    block = block.value;
+                    let bl = this.add.sprite(block.x, block.y, block.name).setInteractive();
+                    bl.displayWidth = 32;
+                    bl.displayHeight = 32;
+
+                    if (BaseGame.instance.anims[`${block.name}`]) {
+                        bl.play(`${block.name}_anim`, 10, true);
+                    }
+                    bl.on("pointerover", () => {
+                        BaseGame.instance.instancedBlock = block;
+                    });
+
+                    bl.setDepth(-1);
+                    if (block.health < 3 && block.health > 0) {
+                        bl.cr = this.add.sprite(block.x, block.y, `cracked${3 - block.health}`);
+                    }
+
+                    if (block.health <= 0) {
+                        bl.destroy();
+                    } else {
+                        BaseGame.instance.blocks.set(block.x, block.y, bl);
+                    }
+                }
+            }
+
+            base.loadedMap = true;
+        }
+
+        for (let update of BaseGame.instance.updates.parts) {
+            update = update.value;
+            let bl = BaseGame.instance.blocks.get(update.x, update.y);
+            if (bl) {
+                bl = bl.value;
+                bl.setTexture(update.name);
+                bl.setDepth(-1);
+                if (update.health < 3) {
+                    if (!bl.cr) {
+                        bl.cr = this.add.sprite(update.x, update.y, `cracked${3 - update.health}`);
+                        bl.cr.setDepth(0);
+                    } else {
+                        bl.cr.setTexture(`cracked${3 - update.health}`);
+                        bl.cr.setDepth(0);
+                    }
+                }
+
+                BaseGame.instance.updates.parts.splice(BaseGame.instance.updates.parts.indexOf(update), 1);
             }
         }
 

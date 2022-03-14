@@ -3,6 +3,7 @@ import { Singleton } from "./systems/Singleton";
 import { Auth } from "./auth/Auth";
 import { Boot } from "./boot/Boot";
 import { Movement } from "./engines/Movement";
+import { Map } from "./engines/Map/Map";
 
 export class SocketServer extends Singleton {
     constructor(server) {
@@ -15,13 +16,14 @@ export class SocketServer extends Singleton {
 
         this.users = [];
         this.movement = new Movement(this);
+        this.map = new Map(20, 20);
 
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
                 let { type, data } = JSON.parse(message);
-                switch(type){
+                switch (type) {
                     case "login":
-                        if(Auth.checkUser(data.name, data.pass)){
+                        if (Auth.checkUser(data.name, data.pass)) {
                             this.send(socket, {
                                 type: "login",
                                 success: true
@@ -30,8 +32,8 @@ export class SocketServer extends Singleton {
                             let user = {
                                 name: data.name,
                                 socket,
-                                x: Math.floor(Math.random() * 100),
-                                y: Math.floor(Math.random() * 100)
+                                x: this.map.spawnTile.x,
+                                y: this.map.spawnTile.y
                             };
 
                             this.users.push(user);
@@ -40,15 +42,40 @@ export class SocketServer extends Singleton {
                         }
                         break;
 
-                        case "move":
-                            this.movement.movePlayer(socket, this.users, data);
-                            break;
+                    case "move":
+                        this.movement.movePlayer(socket, this.users, data);
+                        break;
+
+                    case "leftInteract":
+                        let til = this.map.interact(data);
+                        if (til)
+                            this.sendToAll({
+                                type: "setChange",
+                                data: {
+                                    name: til.name,
+                                    x: til.x,
+                                    y: til.y,
+                                    health: til.health
+                                }
+                            });
+                        else {
+                            this.map.delete(data.x, data.y);
+                            this.sendToAll({
+                                type: "deleteBlock",
+                                data: {
+                                    name: data.name,
+                                    x: data.x,
+                                    y: data.y,
+                                }
+                            });
+                        }
+                        break;
                 }
             });
 
             socket.on("close", () => {
                 let user = this.users.find(user => user.socket == socket);
-                if(user){
+                if (user) {
                     this.users.splice(this.users.indexOf(user), 1);
                     this.sendToAll({
                         type: "playerLeave",
@@ -61,26 +88,26 @@ export class SocketServer extends Singleton {
         });
     }
 
-    send(socket, data){
+    send(socket, data) {
         socket.send(JSON.stringify(data));
     }
 
-    sendTo(user, data){
-        for(let player of this.users){
-            if(player.name == user)
+    sendTo(user, data) {
+        for (let player of this.users) {
+            if (player.name == user)
                 this.send(player.socket, data);
         }
     }
 
-    sendToAll(data){
-        for(let player of this.users){
+    sendToAll(data) {
+        for (let player of this.users) {
             this.send(player.socket, data);
         }
     }
 
-    sendToAllExcept(user, data){
-        for(let player of this.users){
-            if(player.name != user.name)
+    sendToAllExcept(user, data) {
+        for (let player of this.users) {
+            if (player.name != user.name)
                 this.send(player.socket, data);
         }
     }

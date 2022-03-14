@@ -73,6 +73,13 @@ class Boot extends Singleton {
                 y: user.y
             }
         });
+
+        server.send(user.socket, {
+            type: "loadMap",
+            data: {
+                map: server.map.inst
+            }
+        });
     }
 }
 
@@ -167,6 +174,199 @@ class Movement {
     }
 }
 
+class Mapper {
+    constructor() {
+        this.parts = [];
+    }
+
+    loop(callback) {
+        for (let i = 0; i < this.parts.length; i++) {
+            callback(this.parts[i]);
+        }
+    }
+
+    set(x, y, value) {
+        if (!this.get(x, y))
+            this.parts.push({ x, y, value });
+        else
+            this.parts.find(part => part.x === x && part.y === y).value = value;
+
+        return this.get(x, y);
+    }
+
+    get(x, y) {
+        let part = this.parts.find(part => part.x == x && part.y == y);
+        if (part)
+            return part;
+        else
+            return null;
+    }
+
+
+    add(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+
+        part += value;
+        this.set(x, y, part);
+        return part;
+    }
+
+    divide(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+        part /= value;
+        this.set(x, y, part);
+        return part;
+    }
+
+}
+
+class Rectangle {
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     */
+    constructor(x, y, width, height) {
+        /** x location of the rectangle */
+        this.x = x;
+        /** y location of the rectangle */
+        this.y = y;
+        /** width of the rectangle */
+        this.width = width;
+        /** height of the rectangle */
+        this.height = height;
+        /** right side of the rectangle */
+        this.right = this.x + this.width;
+        /** bottom side of the rectangle */
+        this.bottom = this.y + this.height;
+    }
+
+    /**
+     * check if the rectangle overlaps another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} are the rectangles overlapping
+     */
+    overlaps(rectangle) {
+        return (this.x < rectangle.x + rectangle.width &&
+            this.x + this.width > rectangle.x &&
+            this.y < rectangle.y + rectangle.height &&
+            this.y + this.height > rectangle.y);
+    }
+
+    /**
+     * check if the rectangle is inside another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} is the rectangle inside the other rectangle
+     */
+    within(rectangle) {
+        return (rectangle.x <= this.x &&
+            rectangle.right >= this.right &&
+            rectangle.y <= this.y &&
+            rectangle.bottom >= this.bottom);
+    }
+
+    /**
+     * check if the coordinates are inside this rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     * @return {boolean} does the rectangle contain the coordinates
+     */
+    contains(x, y) {
+        return (x >= this.x &&
+            x <= this.right &&
+            y >= this.y &&
+            y <= this.bottom);
+    }
+
+    /**
+     * set the position of the rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * set the size of the rectangle
+     * @param {number} width new rectangle width
+     * @param {number} height new rectangle height
+     */
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class Tile {
+    constructor(name, x, y, width, height){
+        this.name = name;
+        this.x = x * width;
+        this.y = y * height;
+        this.width = width || 32;
+        this.height = height || 32;
+
+        this.rect = new Rectangle(this.x, this.y, this.width, this.height);
+        this.health = 3;
+    }
+}
+
+class Map {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this._tiles = new Mapper();
+
+        for (let i = 0; i < width; i++) {
+            if (i == 0) {
+                let place = Math.floor(Math.random() * height);
+                this.spawnTile = new Tile("portal_sequence", place, i, 32, 32);
+                this._tiles.set(place, i, this.spawnTile);
+            } else {
+                for (let j = 0; j < height; j++) {
+                    this._tiles.set(j, i, new Tile("dirt", j, i, 32, 32));
+                }
+            }
+        }
+    }
+
+    get inst() {
+        return {
+            width: this.width,
+            height: this.height,
+            spawnTile: this.spawnTile,
+            tiles: this._tiles.parts
+        }
+    }
+
+    interact(tile) {
+        for (let x = 0; x < this._tiles.parts.length; x++) {
+            let til = this._tiles.parts[x].value;
+            if (til.name == tile.name && til.x == tile.x && til.y == tile.y) {
+                til.health -= 1;
+                if (til.health >= 0) {
+                    this._tiles.set(til.x, tile.y, til);
+                    return til;
+                }
+            }
+        }
+    }
+
+    delete(x, y) {
+        let alo = this._tiles.parts.find(part => part.x == x && part.y == y);
+        console.log(alo);
+        if (alo)
+            this._tiles.parts.splice(this._tiles.parts.indexOf(alo), 1);
+    }
+}
+
 class SocketServer extends Singleton {
     constructor(server) {
         super();
@@ -178,13 +378,14 @@ class SocketServer extends Singleton {
 
         this.users = [];
         this.movement = new Movement(this);
+        this.map = new Map(20, 20);
 
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
                 let { type, data } = JSON.parse(message);
-                switch(type){
+                switch (type) {
                     case "login":
-                        if(Auth.checkUser(data.name, data.pass)){
+                        if (Auth.checkUser(data.name, data.pass)) {
                             this.send(socket, {
                                 type: "login",
                                 success: true
@@ -193,8 +394,8 @@ class SocketServer extends Singleton {
                             let user = {
                                 name: data.name,
                                 socket,
-                                x: Math.floor(Math.random() * 100),
-                                y: Math.floor(Math.random() * 100)
+                                x: this.map.spawnTile.x,
+                                y: this.map.spawnTile.y
                             };
 
                             this.users.push(user);
@@ -203,15 +404,40 @@ class SocketServer extends Singleton {
                         }
                         break;
 
-                        case "move":
-                            this.movement.movePlayer(socket, this.users, data);
-                            break;
+                    case "move":
+                        this.movement.movePlayer(socket, this.users, data);
+                        break;
+
+                    case "leftInteract":
+                        let til = this.map.interact(data);
+                        if (til)
+                            this.sendToAll({
+                                type: "setChange",
+                                data: {
+                                    name: til.name,
+                                    x: til.x,
+                                    y: til.y,
+                                    health: til.health
+                                }
+                            });
+                        else {
+                            this.map.delete(data.x, data.y);
+                            this.sendToAll({
+                                type: "deleteBlock",
+                                data: {
+                                    name: data.name,
+                                    x: data.x,
+                                    y: data.y,
+                                }
+                            });
+                        }
+                        break;
                 }
             });
 
             socket.on("close", () => {
                 let user = this.users.find(user => user.socket == socket);
-                if(user){
+                if (user) {
                     this.users.splice(this.users.indexOf(user), 1);
                     this.sendToAll({
                         type: "playerLeave",
@@ -224,26 +450,26 @@ class SocketServer extends Singleton {
         });
     }
 
-    send(socket, data){
+    send(socket, data) {
         socket.send(JSON.stringify(data));
     }
 
-    sendTo(user, data){
-        for(let player of this.users){
-            if(player.name == user)
+    sendTo(user, data) {
+        for (let player of this.users) {
+            if (player.name == user)
                 this.send(player.socket, data);
         }
     }
 
-    sendToAll(data){
-        for(let player of this.users){
+    sendToAll(data) {
+        for (let player of this.users) {
             this.send(player.socket, data);
         }
     }
 
-    sendToAllExcept(user, data){
-        for(let player of this.users){
-            if(player.name != user.name)
+    sendToAllExcept(user, data) {
+        for (let player of this.users) {
+            if (player.name != user.name)
                 this.send(player.socket, data);
         }
     }

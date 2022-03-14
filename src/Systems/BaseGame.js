@@ -17,6 +17,10 @@ export class BaseGame extends Singleton {
             borders: []
         }
 
+        this.anims = {};
+
+        this.overlays = new Mapper();
+        this.updates = new Mapper();
         this.blocks = new Mapper();
     }
     
@@ -66,5 +70,22 @@ export class BaseGame extends Singleton {
         EventManager.instance.update();
 
         requestAnimationFrame(this.update.bind(this));
+    }
+
+    loadMap(map){
+        this.map = map;
+        this.loadedMap = false;
+    }
+
+    deleteBlock(data){
+        let block = this.blocks.get(data.x, data.y);
+        if (block){
+            block = block.value;
+            if(block.cr)
+                block.cr.destroy();
+
+            block.destroy();
+            this.blocks.parts.splice(this.blocks.parts.indexOf(block), 1);
+        }
     }
 }

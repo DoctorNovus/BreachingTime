@@ -30,5 +30,12 @@ export class Boot extends Singleton {
                 y: user.y
             }
         });
+
+        server.send(user.socket, {
+            type: "loadMap",
+            data: {
+                map: server.map.inst
+            }
+        });
     }
 }
