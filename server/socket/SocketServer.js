@@ -33,7 +33,9 @@ export class SocketServer extends Singleton {
                                 name: data.name,
                                 socket,
                                 x: this.map.spawnTile.x,
-                                y: this.map.spawnTile.y
+                                y: this.map.spawnTile.y,
+                                width: 30,
+                                height: 32
                             };
 
                             this.users.push(user);

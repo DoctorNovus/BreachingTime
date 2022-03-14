@@ -83,6 +83,87 @@ class Boot extends Singleton {
     }
 }
 
+class Rectangle {
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     */
+    constructor(x, y, width, height) {
+        /** x location of the rectangle */
+        this.x = x;
+        /** y location of the rectangle */
+        this.y = y;
+        /** width of the rectangle */
+        this.width = width;
+        /** height of the rectangle */
+        this.height = height;
+        /** right side of the rectangle */
+        this.right = this.x + this.width;
+        /** bottom side of the rectangle */
+        this.bottom = this.y + this.height;
+    }
+
+    /**
+     * check if the rectangle overlaps another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} are the rectangles overlapping
+     */
+    overlaps(rectangle) {
+        return (this.x < rectangle.x + rectangle.width &&
+            this.x + this.width > rectangle.x &&
+            this.y < rectangle.y + rectangle.height &&
+            this.y + this.height > rectangle.y);
+    }
+
+    /**
+     * check if the rectangle is inside another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} is the rectangle inside the other rectangle
+     */
+    within(rectangle) {
+        return (rectangle.x <= this.x &&
+            rectangle.right >= this.right &&
+            rectangle.y <= this.y &&
+            rectangle.bottom >= this.bottom);
+    }
+
+    /**
+     * check if the coordinates are inside this rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     * @return {boolean} does the rectangle contain the coordinates
+     */
+    contains(x, y) {
+        return (x >= this.x &&
+            x <= this.right &&
+            y >= this.y &&
+            y <= this.bottom);
+    }
+
+    /**
+     * set the position of the rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * set the size of the rectangle
+     * @param {number} width new rectangle width
+     * @param {number} height new rectangle height
+     */
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
 class Movement {
     constructor(network) {
         this.queue = [];
@@ -91,36 +172,100 @@ class Movement {
         setInterval(this.runMovementQueue.bind(this));
     }
 
+    checkCollision(rect, map) {
+        let collides = false;
+
+        for (let tile of map._tiles.parts) {
+            tile = tile.value;
+            if (tile.layer == ("foreground") && tile.health > 0) {
+                if (rect.overlaps(tile.rect)) {
+                    collides = true;
+                }
+            }
+        }
+
+        return collides;
+    }
+
     runMovementQueue() {
         for (let que of this.queue) {
+            if (!que) return;
+
             if (que.x == 0 && que.y == 0) {
                 this.queue.splice(this.queue.indexOf(que), 1);
                 return;
             }
 
             let user = this.network.users.find(user => user.name == que.name);
-            user.x += que.x;
-            user.y += que.y;
-
-            let direction = "idle";
-            if (que.x == 0)
-                direction = "idle";
-            else {
-                if (que.x > 0)
-                    direction = "right";
-                else
-                    direction = "left";
-            }
-
-            this.network.sendToAll({
-                type: "move",
-                data: {
-                    name: user.name,
-                    x: user.x,
-                    y: user.y,
-                    direction
+            if (user) {
+                let rect = user.rect;
+                if (!rect) {
+                    rect = new Rectangle(user.x, user.y, user.width, user.height);
+                    user.rect = rect;
                 }
-            });
+
+                rect.x += que.x;
+                rect.y += que.y;
+
+                if (this.checkCollision(rect, this.network.map)) {
+                    rect.setPosition(user.x, user.y);
+                    return;
+                }
+
+                user.x += que.x;
+                user.y += que.y;
+
+                let direction = "idle";
+                if (que.x == 0)
+                    direction = "idle";
+                else {
+                    if (que.x > 0)
+                        direction = "right";
+                    else
+                        direction = "left";
+                }
+
+                this.network.sendToAll({
+                    type: "move",
+                    data: {
+                        name: user.name,
+                        x: user.x,
+                        y: user.y,
+                        direction
+                    }
+                });
+            }
+        }
+
+        for (let user of this.network.users) {
+            let que = this.queue.find(que => que && que.name == user.name);
+            if ((!que || que.y == 0) && user && user.rect) {
+                let rect = user.rect;
+                if (!rect.width || !rect.height) {
+                    rect.width = 30;
+                    rect.height = 30;
+                }
+
+                rect.setPosition(user.x, user.y + 1);
+
+
+                if (this.checkCollision(rect, this.network.map)) {
+                    rect.setPosition(user.x, user.y);
+                    return;
+                } else {
+                    user.y = rect.y;
+
+                    this.network.sendToAll({
+                        type: "move",
+                        data: {
+                            name: user.name,
+                            x: user.x,
+                            y: user.y,
+                            direction: "idle"
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -224,90 +369,10 @@ class Mapper {
 
 }
 
-class Rectangle {
-
-    /**
-     * @param {number} x 
-     * @param {number} y 
-     * @param {number} width 
-     * @param {number} height 
-     */
-    constructor(x, y, width, height) {
-        /** x location of the rectangle */
-        this.x = x;
-        /** y location of the rectangle */
-        this.y = y;
-        /** width of the rectangle */
-        this.width = width;
-        /** height of the rectangle */
-        this.height = height;
-        /** right side of the rectangle */
-        this.right = this.x + this.width;
-        /** bottom side of the rectangle */
-        this.bottom = this.y + this.height;
-    }
-
-    /**
-     * check if the rectangle overlaps another rectangle
-     * @param {Rectangle} rectangle rectangle to compare with
-     * @return {boolean} are the rectangles overlapping
-     */
-    overlaps(rectangle) {
-        return (this.x < rectangle.x + rectangle.width &&
-            this.x + this.width > rectangle.x &&
-            this.y < rectangle.y + rectangle.height &&
-            this.y + this.height > rectangle.y);
-    }
-
-    /**
-     * check if the rectangle is inside another rectangle
-     * @param {Rectangle} rectangle rectangle to compare with
-     * @return {boolean} is the rectangle inside the other rectangle
-     */
-    within(rectangle) {
-        return (rectangle.x <= this.x &&
-            rectangle.right >= this.right &&
-            rectangle.y <= this.y &&
-            rectangle.bottom >= this.bottom);
-    }
-
-    /**
-     * check if the coordinates are inside this rectangle
-     * @param {number} x x coordinate
-     * @param {number} y y coordinate
-     * @return {boolean} does the rectangle contain the coordinates
-     */
-    contains(x, y) {
-        return (x >= this.x &&
-            x <= this.right &&
-            y >= this.y &&
-            y <= this.bottom);
-    }
-
-    /**
-     * set the position of the rectangle
-     * @param {number} x x coordinate
-     * @param {number} y y coordinate
-     */
-    setPosition(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /**
-     * set the size of the rectangle
-     * @param {number} width new rectangle width
-     * @param {number} height new rectangle height
-     */
-    setSize(width, height) {
-        this.width = width;
-        this.height = height;
-    }
-}
-
 class Tile {
-    constructor(name, x, y, width, height){
+    constructor(name, layer, x, y, width, height){
         this.name = name;
+        this.layer = layer;
         this.x = x * width;
         this.y = y * height;
         this.width = width || 32;
@@ -327,11 +392,11 @@ class Map {
         for (let i = 0; i < width; i++) {
             if (i == 0) {
                 let place = Math.floor(Math.random() * height);
-                this.spawnTile = new Tile("portal_sequence", place, i, 32, 32);
+                this.spawnTile = new Tile("portal_sequence", "background", place, i, 32, 32);
                 this._tiles.set(place, i, this.spawnTile);
             } else {
                 for (let j = 0; j < height; j++) {
-                    this._tiles.set(j, i, new Tile("dirt", j, i, 32, 32));
+                    this._tiles.set(j, i, new Tile("dirt", "foreground", j, i, 32, 32));
                 }
             }
         }
@@ -415,7 +480,9 @@ class SocketServer extends Singleton {
                                 name: data.name,
                                 socket,
                                 x: this.map.spawnTile.x,
-                                y: this.map.spawnTile.y
+                                y: this.map.spawnTile.y,
+                                width: 30,
+                                height: 32
                             };
 
                             this.users.push(user);

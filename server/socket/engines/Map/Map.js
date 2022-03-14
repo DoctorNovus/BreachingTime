@@ -10,11 +10,11 @@ export class Map {
         for (let i = 0; i < width; i++) {
             if (i == 0) {
                 let place = Math.floor(Math.random() * height);
-                this.spawnTile = new Tile("portal_sequence", place, i, 32, 32);
+                this.spawnTile = new Tile("portal_sequence", "background", place, i, 32, 32);
                 this._tiles.set(place, i, this.spawnTile);
             } else {
                 for (let j = 0; j < height; j++) {
-                    this._tiles.set(j, i, new Tile("dirt", j, i, 32, 32));
+                    this._tiles.set(j, i, new Tile("dirt", "foreground", j, i, 32, 32));
                 }
             }
         }

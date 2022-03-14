@@ -1,8 +1,9 @@
 import { Rectangle } from "../../shapes/Rectangle";
 
 export class Tile {
-    constructor(name, x, y, width, height){
+    constructor(name, layer, x, y, width, height){
         this.name = name;
+        this.layer = layer;
         this.x = x * width;
         this.y = y * height;
         this.width = width || 32;
