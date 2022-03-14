@@ -818,6 +818,9 @@
                 let bl = BaseGame.instance.blocks.get(update.x, update.y);
                 if (bl) {
                     bl = bl.value;
+                    if (bl.scene == undefined)
+                        return;
+
                     bl.setTexture(update.name);
                     bl.setDepth(-1);
                     if (update.health < 3) {
@@ -827,6 +830,11 @@
                         } else {
                             bl.cr.setTexture(`cracked${3 - update.health}`);
                             bl.cr.setDepth(0);
+                        }
+                    } else if (update.health == 3) {
+                        if (bl.cr) {
+                            bl.cr.destroy();
+                            delete bl.cr;
                         }
                     }
 

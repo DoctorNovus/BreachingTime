@@ -47,7 +47,7 @@ export class SocketServer extends Singleton {
                         break;
 
                     case "leftInteract":
-                        let til = this.map.interact(data);
+                        let til = this.map.interact(data, this);
                         if (til)
                             this.sendToAll({
                                 type: "setChange",
