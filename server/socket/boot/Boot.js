@@ -2,6 +2,8 @@ import { Singleton } from "../systems/Singleton";
 
 export class Boot extends Singleton {
     login(server, user) {
+        console.log(`${user.name} logged in`);
+        
         server.send(user.socket, {
             type: "selfJoin",
             data: {

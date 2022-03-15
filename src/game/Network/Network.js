@@ -24,6 +24,14 @@ export class Network extends Singleton {
             let uText;
 
             switch (type) {
+                case "login":
+                    if (data.success) {
+                        console.log("Logged in");
+                    } else {
+                        console.log("Login failed");
+                    }
+                    break;
+                    
                 case "selfJoin":
                     console.log("Self joined", data.name);
                     player = new Player(data.name, data.x, data.y);

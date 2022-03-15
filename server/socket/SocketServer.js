@@ -16,6 +16,7 @@ export class SocketServer extends Singleton {
 
         this.users = [];
         this.movement = new Movement(this);
+        setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
         this.map = new Map(20, 20);
 
         this.wss.on("connection", (socket) => {
@@ -26,7 +27,9 @@ export class SocketServer extends Singleton {
                         if (Auth.checkUser(data.name, data.pass)) {
                             this.send(socket, {
                                 type: "login",
-                                success: true
+                                data: {
+                                    success: true
+                                }
                             });
 
                             let user = {
@@ -41,11 +44,18 @@ export class SocketServer extends Singleton {
                             this.users.push(user);
 
                             Boot.instance.login(this, user);
+                        } else {
+                            this.send(socket, {
+                                type: "login",
+                                data: {
+                                    success: false
+                                }
+                            });
                         }
                         break;
 
                     case "move":
-                        this.movement.movePlayer(socket, this.users, data);
+                        this.movement.movePlayer(this, socket, this.users, data);
                         break;
 
                     case "leftInteract":

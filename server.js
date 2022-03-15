@@ -45,6 +45,8 @@ class Auth {
 
 class Boot extends Singleton {
     login(server, user) {
+        console.log(`${user.name} logged in`);
+        
         server.send(user.socket, {
             type: "selfJoin",
             data: {
@@ -165,11 +167,8 @@ class Rectangle {
 }
 
 class Movement {
-    constructor(network) {
+    constructor() {
         this.queue = [];
-        this.network = network;
-
-        setInterval(this.runMovementQueue.bind(this));
     }
 
     checkCollision(rect, map) {
@@ -187,7 +186,7 @@ class Movement {
         return collides;
     }
 
-    runMovementQueue() {
+    runMovementQueue(net) {
         for (let que of this.queue) {
             if (!que) return;
 
@@ -196,7 +195,17 @@ class Movement {
                 return;
             }
 
-            let user = this.network.users.find(user => user.name == que.name);
+            if (que.x > 0)
+                que.x = 1;
+            else if (que.x < 0)
+                que.x = -1;
+
+            if (que.y > 0)
+                que.y = 1;
+            else if (que.y < 0)
+                que.y = -1;
+
+            let user = net.users.find(user => user.name == que.name);
             if (user) {
                 let rect = user.rect;
                 if (!rect) {
@@ -207,7 +216,7 @@ class Movement {
                 rect.x += que.x;
                 rect.y += que.y;
 
-                if (this.checkCollision(rect, this.network.map)) {
+                if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
                     return;
                 }
@@ -225,7 +234,7 @@ class Movement {
                         direction = "left";
                 }
 
-                this.network.sendToAll({
+                net.sendToAll({
                     type: "move",
                     data: {
                         name: user.name,
@@ -237,10 +246,14 @@ class Movement {
             }
         }
 
-        for (let user of this.network.users) {
+        for (let user of net.users) {
             let que = this.queue.find(que => que && que.name == user.name);
-            if ((!que || que.y == 0) && user && user.rect) {
+            if ((!que) || (que && que.y == 0)) {
+                if (!user.rect)
+                    user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+
                 let rect = user.rect;
+
                 if (!rect.width || !rect.height) {
                     rect.width = 30;
                     rect.height = 30;
@@ -249,13 +262,13 @@ class Movement {
                 rect.setPosition(user.x, user.y + 1);
 
 
-                if (this.checkCollision(rect, this.network.map)) {
+                if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
                     return;
                 } else {
                     user.y = rect.y;
 
-                    this.network.sendToAll({
+                    net.sendToAll({
                         type: "move",
                         data: {
                             name: user.name,
@@ -269,16 +282,16 @@ class Movement {
         }
     }
 
-    movePlayer(socket, users, data) {
+    movePlayer(net, socket, users, data) {
         let user = users.find(user => user.socket == socket);
 
         if (data.x == 0 && data.y == 0) {
-            let que = this.queue.find(que => que && que.name == user.name);
-            if (que) {
-                this.queue.splice(this.queue.indexOf(que), 1);
+            let que = this.queue.filter(que => que && que.name == user.name);
+            for (let q of que) {
+                this.queue.splice(this.queue.indexOf(q), 1);
             }
 
-            this.network.sendToAll({
+            net.sendToAll({
                 type: "move",
                 data: {
                     name: user.name,
@@ -296,26 +309,15 @@ class Movement {
 
             if (!this.queue.find(que => que && que.name == user.name)) {
                 this.queue.push(queu);
+            } else {
+                let que = this.queue.find(que => que && que.name == user.name);
+                if (que.y == 0 && data.y > 0)
+                    que.y = data.y;
+
+                if (que.x == 0 && data.x > 0)
+                    que.x = data.x;
             }
         }
-        // if (user) {
-        //     user.velX = data.x;
-        //     user.velY = data.y;
-
-        //     user.x += data.x;
-        //     user.y += data.y;
-
-        //     for (let player of users) {
-        //         player.socket.send(JSON.stringify({
-        //             type: "move",
-        //             data: {
-        //                 name: user.name,
-        //                 x: user.x,
-        //                 y: user.y
-        //             }
-        //         }));
-        //     }
-        // }
     }
 }
 
@@ -463,6 +465,7 @@ class SocketServer extends Singleton {
 
         this.users = [];
         this.movement = new Movement(this);
+        setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
         this.map = new Map(20, 20);
 
         this.wss.on("connection", (socket) => {
@@ -473,7 +476,9 @@ class SocketServer extends Singleton {
                         if (Auth.checkUser(data.name, data.pass)) {
                             this.send(socket, {
                                 type: "login",
-                                success: true
+                                data: {
+                                    success: true
+                                }
                             });
 
                             let user = {
@@ -492,7 +497,7 @@ class SocketServer extends Singleton {
                         break;
 
                     case "move":
-                        this.movement.movePlayer(socket, this.users, data);
+                        this.movement.movePlayer(this, socket, this.users, data);
                         break;
 
                     case "leftInteract":
