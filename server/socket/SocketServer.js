@@ -82,6 +82,21 @@ export class SocketServer extends Singleton {
                             });
                         }
                         break;
+
+                    case "chat":
+                        let user = this.users.find(user => user.socket == socket);
+                        this.sendToAll({
+                            type: "chat",
+                            data: {
+                                name: user.name,
+                                message: data.message
+                            }
+                        });
+                        break;
+
+                    default:
+                        console.log("Unknown message type: " + type);
+                        break;
                 }
             });
 

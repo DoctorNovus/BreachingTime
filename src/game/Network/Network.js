@@ -1,3 +1,4 @@
+import { MainGame } from "..";
 import { Player } from "../Entities/Player";
 import { BaseGame } from "../Systems/BaseGame";
 import { Singleton } from "../Systems/Singleton";
@@ -31,7 +32,7 @@ export class Network extends Singleton {
                         console.log("Login failed");
                     }
                     break;
-                    
+
                 case "selfJoin":
                     console.log("Self joined", data.name);
                     player = new Player(data.name, data.x, data.y);
@@ -88,6 +89,10 @@ export class Network extends Singleton {
 
                 case "deleteBlock":
                     instanced.deleteBlock(data);
+                    break;
+
+                case "chat":
+                    MainGame.instance.onMessage(data);
                     break;
                     
                 default:
