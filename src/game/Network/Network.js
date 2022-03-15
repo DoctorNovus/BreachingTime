@@ -21,13 +21,21 @@ export class Network extends Singleton {
             let { type, data } = JSON.parse(event.data);
             let player;
             let sprite;
+            let uText;
 
             switch (type) {
                 case "selfJoin":
                     console.log("Self joined", data.name);
                     player = new Player(data.name, data.x, data.y);
                     sprite = Network.instance.game.add.sprite(data.x, data.y, "idle1");
+                    uText = Network.instance.game.add.text(data.x, data.y, data.name, {
+                        font: "16px Arial",
+                        fill: "#ffffff",
+                        align: "center"
+                    });
+
                     player.setSprite(sprite);
+                    player.setName(uText);
                     player.animate("idle");
                     instanced.addEntity(player);
                     BaseGame.instance.camera.startFollow(player.sprite);
@@ -38,7 +46,13 @@ export class Network extends Singleton {
                         console.log("Player joined", data.name);
                         player = new Player(data.name, data.x, data.y);
                         sprite = Network.instance.game.add.sprite(data.x, data.y, "idle1");
+                        uText = Network.instance.game.add.text(data.x, data.y, data.name, {
+                            font: "16px Arial",
+                            fill: "#ffffff",
+                            align: "center"
+                        });
                         player.setSprite(sprite);
+                        player.setName(uText);
                         player.animate("idle");
                         instanced.addEntity(player);
                     }

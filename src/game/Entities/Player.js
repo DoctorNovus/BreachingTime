@@ -19,6 +19,12 @@ export class Player extends Entity {
         this.sprite.height = this.height;
     }
 
+    setName(name) {
+        this.name = name;
+        this.name.x = this.x - this.width * .6;
+        this.name.y = this.y - this.height;
+    }
+
     canMove() {
         if (!BaseGame.instance.checkCollides(this))
             return true;
@@ -29,6 +35,9 @@ export class Player extends Entity {
     move(x, y, direction = "right") {
         this.sprite.x = x;
         this.sprite.y = y;
+
+        this.name.x = x - this.width * .6;
+        this.name.y = y - this.height;
 
         if (direction == "left")
             this.animate("walking", -1);

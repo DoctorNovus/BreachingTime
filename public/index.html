@@ -5,9 +5,34 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Breaching Time</title>
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+        #root {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #ui {
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        #ui, #game {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
-<body>
-    <div id="game"></div>
+<body style="width: 100vw; height: 100vh; overflow: hidden;">
+    <div id="root" style="display: flex; flex-direction: column;">
+        <div id="ui"></div>
+        <div id="game"></div>
+    </div>
     <script src="libs/phaser.min.js"></script>
     <script src="game.js"></script>
 </body>

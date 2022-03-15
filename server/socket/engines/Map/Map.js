@@ -1,4 +1,4 @@
-import { Mapper } from "../../../../src/Math/Mapper";
+import { Mapper } from "../../math/Mapper";
 import { Tile } from "./Tile";
 
 export class Map {
