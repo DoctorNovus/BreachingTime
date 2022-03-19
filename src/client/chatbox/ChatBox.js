@@ -9,6 +9,7 @@ export class ChatBox extends Component {
 
         this.state = {
             messages: [],
+            activeChat: 0
         };
     }
 
@@ -16,8 +17,9 @@ export class ChatBox extends Component {
         return (
             <div className="chatbox">
                 <div className="chatbox-header">
-                    <div className="chatbox-header-title">Chat</div>
-                    <div className="chatbox-header-close">X</div>
+                    <div className={`chatbox-header-tab ${this.state.activeChat == 0 ? "active" : ""}`} onClick={() => this.selectChat(0)}>Global Chat</div>
+                    <div className={`chatbox-header-tab ${this.state.activeChat == 1 ? "active" : ""}`} onClick={() => this.selectChat(1)}>Guild Chat</div>
+                    <div className={`chatbox-header-tab ${this.state.activeChat == 2 ? "active" : ""}`} onClick={() => this.selectChat(2)}>Private Message</div>
                 </div>
                 <div className="chatbox-body">
                     <div className="chatbox-body-messages">
@@ -37,7 +39,7 @@ export class ChatBox extends Component {
                             e.preventDefault();
                             this.sendMessage(e.target[0].value);
                         }}>
-                            <label htmlFor="cb-content">Message: </label>
+                            <label htmlFor="cb-content"></label>
                             <input name="cb-content" id="cb-content" type="text" placeholder="Type a message..." />
                         </form>
                     </div>
@@ -61,5 +63,11 @@ export class ChatBox extends Component {
                 }
             });
         }
+    }
+
+    selectChat(chat) {
+        this.setState({
+            activeChat: chat
+        });
     }
 }
