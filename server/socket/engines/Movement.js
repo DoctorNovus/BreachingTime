@@ -47,16 +47,21 @@ export class Movement {
                     user.rect = rect;
                 }
 
-                rect.x += que.x;
-                rect.y += que.y;
+                let speed = 2;
+
+                if(user.speed)
+                    speed = user.speed;
+
+                rect.x += que.x * speed;
+                rect.y += que.y * speed;
 
                 if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
                     return;
                 }
 
-                user.x += que.x;
-                user.y += que.y;
+                user.x += que.x * speed;
+                user.y += que.y * speed;
 
                 let direction = "idle";
                 if (que.x == 0)

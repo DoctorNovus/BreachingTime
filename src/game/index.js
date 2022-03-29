@@ -6,7 +6,8 @@ import { GameScene } from "./Scenes/GameScene";
 import { Singleton } from "./Systems/Singleton";
 
 export class MainGame extends Singleton {
-    start(){
+    start(username){
+        BaseGame.instance.username = username;
         let config = new GameConfig({
             parent: "game", scene: [
                 StartScene,

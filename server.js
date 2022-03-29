@@ -2,26 +2,16 @@
 
 var http = require('http');
 var express = require('express');
+var mongodb = require('mongodb');
+var bcrypt = require('bcrypt');
 var WebSocket = require('ws');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 var http__default = /*#__PURE__*/_interopDefaultLegacy(http);
 var express__default = /*#__PURE__*/_interopDefaultLegacy(express);
+var bcrypt__default = /*#__PURE__*/_interopDefaultLegacy(bcrypt);
 var WebSocket__default = /*#__PURE__*/_interopDefaultLegacy(WebSocket);
-
-class Server {
-    constructor(port){
-        this.port = port;
-        this.app = express__default["default"]();
-        this.app.use(express__default["default"].static(`${process.cwd()}/public`));
-
-        this.serv = http__default["default"].createServer(this.app);
-        this.serv.listen(this.port, () => {
-            console.log("Server started on port " + this.port);
-        });
-    }
-}
 
 class Singleton {
 
@@ -37,9 +27,139 @@ class Singleton {
     }
 }
 
-class Auth {
-    static checkUser(user, pass) {
-        return true;
+const url = 'mongodb://localhost:27017';
+
+class Database extends Singleton {
+    async connect(){
+        this.client = new mongodb.MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+        await this.client.connect();
+        console.log("Connected to database");
+        this.db = this.client.db("breaching-time");
+        this.users = this.db.collection("users");
+        this.worlds = this.db.collection("worlds");
+
+        this.connected = true;
+    }
+}
+
+class UserRegistry extends Singleton {
+    constructor() {
+        super();
+        this.users = [];
+    }
+
+    addUser(user) {
+        this.users.push(user);
+    }
+
+    removeUser(user) {
+        this.users.splice(this.users.indexOf(user), 1);
+    }
+
+    getUser(name) {
+        return this.users.find(u => u.name === name);
+    }
+
+    getUsers() {
+        return this.users;
+    }
+}
+
+class Server {
+    constructor(port) {
+        this.port = port;
+    }
+
+    async start() {
+        this.app = express__default["default"]();
+        this.app.use(express__default["default"].static(`${process.cwd()}/public`));
+
+        if (!Database.instance.connected)
+            await Database.instance.connect();
+
+        this.database = Database.instance;
+
+        this.app.post("/api/login", async (req, res) => {
+            let body = "";
+            req.on("data", (chunk) => {
+                body += chunk;
+            });
+
+            req.on("end", async () => {
+                let { uname, pass } = JSON.parse(body);
+                if (!uname || !pass) {
+                    res.status(400).send("Invalid username or password");
+                    return;
+                }
+
+                let us = await this.database.users.findOne({ username: uname });
+                if (us) {
+                    let result = await bcrypt__default["default"].compareSync(pass, us.password);
+                    if (result) {
+                        res.send({
+                            success: true,
+                            user: {
+                                name: us.username
+                            }
+                        });
+
+                        UserRegistry.instance.addUser({ name: us.username });
+                    } else {
+                        res.send({
+                            success: false,
+                            message: "Incorrect username/password"
+                        });
+                    }
+                } else {
+                    res.send({
+                        success: false,
+                        message: "No user with that username exists."
+                    });
+                }
+            });
+        });
+
+        this.app.post("/api/register", async (req, res) => {
+            let body = "";
+            req.on("data", (chunk) => {
+                body += chunk;
+            });
+
+            req.on("end", async () => {
+                let { uname, email, pass } = JSON.parse(body);
+
+                if (!uname || !email || !pass) {
+                    res.status(400).send("Invalid username or password");
+                    return;
+                }
+
+                let us = await this.database.users.findOne({ username: uname });
+                if (us) {
+                    res.send({
+                        success: false,
+                        message: "Username already taken."
+                    });
+                } else {
+                    let hash = await bcrypt__default["default"].hashSync(pass, 10);
+                    let user = await this.database.users.insertOne({
+                        username: uname,
+                        email: email,
+                        password: hash
+                    });
+                    res.send({
+                        success: true,
+                        user: {
+                            name: user.username
+                        }
+                    });
+                }
+            });
+        });
+
+        this.serv = http__default["default"].createServer(this.app);
+        this.serv.listen(this.port, () => {
+            console.log("Server started on port " + this.port);
+        });
     }
 }
 
@@ -213,16 +333,21 @@ class Movement {
                     user.rect = rect;
                 }
 
-                rect.x += que.x;
-                rect.y += que.y;
+                let speed = 2;
+
+                if(user.speed)
+                    speed = user.speed;
+
+                rect.x += que.x * speed;
+                rect.y += que.y * speed;
 
                 if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
                     return;
                 }
 
-                user.x += que.x;
-                user.y += que.y;
+                user.x += que.x * speed;
+                user.y += que.y * speed;
 
                 let direction = "idle";
                 if (que.x == 0)
@@ -385,6 +510,19 @@ class Tile {
     }
 }
 
+class TileIndexItem {
+    constructor(name, type, layer){
+        this.name = name;
+        this.type = type;
+        this.layer = layer;
+    }
+}
+
+const TileIndex = {
+    "dirt": new TileIndexItem("dirt", "block", "foreground"),
+    "portal_sequence": new TileIndexItem("portal_sequence", "entrance", "background"),
+};
+
 class Map {
     constructor(width, height) {
         this.width = width;
@@ -417,31 +555,39 @@ class Map {
         for (let x = 0; x < this._tiles.parts.length; x++) {
             let til = this._tiles.parts[x].value;
             if (til.name == tile.name && til.x == tile.x && til.y == tile.y) {
-                til.health -= 1;
+                let index = TileIndex[til.name];
+                if (index) {
+                    if (index.type == "entrance") {
+                        console.log("entrance");
+                        return til;
+                    } else if (index.type == "block") {
+                        til.health -= 1;
 
-                if (til.healing)
-                    clearTimeout(til.healing);
+                        if (til.healing)
+                            clearTimeout(til.healing);
 
-                til.healing = setTimeout(() => {
-                    til.health = 3;
-                    serv.sendToAll({
-                        type: "setChange",
-                        data: {
-                            name: til.name,
-                            x: til.x,
-                            y: til.y,
-                            health: til.health
+                        til.healing = setTimeout(() => {
+                            til.health = 3;
+                            serv.sendToAll({
+                                type: "setChange",
+                                data: {
+                                    name: til.name,
+                                    x: til.x,
+                                    y: til.y,
+                                    health: til.health
+                                }
+                            });
+                        }, 2500);
+
+                        if (til.health > 0) {
+                            this._tiles.set(til.x, til.y, til);
+                            return til;
+                        } else {
+                            clearTimeout(til.healing);
+                            let till = this._tiles.parts.find(part => part.x == til.x && part.y == til.y);
+                            this._tiles.parts.splice(this._tiles.parts.indexOf(till), 1);
                         }
-                    });
-                }, 2500);
-
-                if (til.health > 0) {
-                    this._tiles.set(til.x, til.y, til);
-                    return til;
-                } else {
-                    clearTimeout(til.healing);
-                    let till = this._tiles.parts.find(part => part.x == til.x && part.y == til.y);
-                    this._tiles.parts.splice(this._tiles.parts.indexOf(till), 1);
+                    }
                 }
             }
         }
@@ -462,18 +608,23 @@ class SocketServer extends Singleton {
         });
 
         console.log("Socket server started");
+    }
+
+    async start() {
+        if (!Database.instance.connected)
+            await Database.instance.connect();
 
         this.users = [];
         this.movement = new Movement(this);
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
-        this.map = new Map(20, 20);
+        this.map = new Map(50, 50);
 
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
                 let { type, data } = JSON.parse(message);
                 switch (type) {
                     case "login":
-                        if (Auth.checkUser(data.name, data.pass)) {
+                        if (UserRegistry.instance.getUser(data.name)) {
                             this.send(socket, {
                                 type: "login",
                                 data: {
@@ -493,6 +644,13 @@ class SocketServer extends Singleton {
                             this.users.push(user);
 
                             Boot.instance.login(this, user);
+                        } else {
+                            this.send(socket, {
+                                type: "login",
+                                data: {
+                                    success: false
+                                }
+                            });
                         }
                         break;
 
@@ -582,5 +740,9 @@ class SocketServer extends Singleton {
     }
 }
 
-let server = new Server(8080);
-new SocketServer(server);
+(async() => {
+    let server = new Server(8080);
+    await server.start();
+    let socketServer = new SocketServer(server);
+    await socketServer.start();
+})();

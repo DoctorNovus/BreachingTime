@@ -4,6 +4,8 @@ import { Auth } from "./auth/Auth";
 import { Boot } from "./boot/Boot";
 import { Movement } from "./engines/Movement";
 import { Map } from "./engines/Map/Map";
+import { Database } from "./database/Database";
+import { UserRegistry } from "../shared/UserRegistry";
 
 export class SocketServer extends Singleton {
     constructor(server) {
@@ -13,18 +15,23 @@ export class SocketServer extends Singleton {
         });
 
         console.log("Socket server started");
+    }
+
+    async start() {
+        if (!Database.instance.connected)
+            await Database.instance.connect();
 
         this.users = [];
         this.movement = new Movement(this);
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
-        this.map = new Map(20, 20);
+        this.map = new Map(50, 50);
 
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
                 let { type, data } = JSON.parse(message);
                 switch (type) {
                     case "login":
-                        if (Auth.checkUser(data.name, data.pass)) {
+                        if (UserRegistry.instance.getUser(data.name)) {
                             this.send(socket, {
                                 type: "login",
                                 data: {

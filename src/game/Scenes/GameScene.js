@@ -76,13 +76,13 @@ export class GameScene extends Phaser.Scene {
 
         BaseGame.instance.setCamera(this.cameras.main, 1.5);
 
-        let username = "test" + Math.floor(Math.random() * 200);
+        let username = BaseGame.instance.username;
+        console.log(`Username: ${username}`);
         Network.instance.username = username;
         Network.instance.send({
             type: "login",
             data: {
-                name: username,
-                pass: "test"
+                name: username
             }
         });
 
