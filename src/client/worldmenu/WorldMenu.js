@@ -1,4 +1,5 @@
 import React from 'react';
+import { Network } from '../../game/Network/Network';
 
 import "./WorldMenu.css";
 
@@ -47,6 +48,12 @@ export default function WorldMenu({ worlds, shown, setSelected, mode }) {
                                 return (
                                     <li key={i} onClick={() => {
                                         setSelected(world.name);
+                                        Network.instance.send({
+                                            type: "worldSelect",
+                                            data: {
+                                                name: world.name
+                                            }
+                                        });
                                     }}>
                                         <div className="world-menu-world">
                                             <div className="world-menu-world-name">

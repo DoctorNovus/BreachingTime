@@ -21,7 +21,7 @@ export class SocketServer extends Singleton {
             await Database.instance.connect();
 
         this.users = [];
-        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30}, { name: "HiroWorld2", players: [], maxPlayers: 30}];
+        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30 }, { name: "HiroWorld2", players: [], maxPlayers: 30 }];
 
         this.movement = new Movement(this);
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
@@ -102,6 +102,11 @@ export class SocketServer extends Singleton {
                         });
                         break;
 
+                    case "worldSelect":
+                        let { name } = data;
+                        Boot.instance.handleWorldSelect(this, socket, name);
+                        break;
+
                     default:
                         console.log("Unknown message type: " + type);
                         break;
@@ -127,23 +132,34 @@ export class SocketServer extends Singleton {
         socket.send(JSON.stringify(data));
     }
 
-    sendTo(user, data) {
+    sendTo(user, data, world) {
         for (let player of this.users) {
-            if (player.name == user)
+            if (player.name == user) {
+                if (world && player.world == world)
+                    this.send(player.socket, data);
+                else if (!world)
+                    this.send(player.socket, data);
+            }
+        }
+    }
+
+    sendToAll(data, world) {
+        for (let player of this.users) {
+            if (world && player.world == world)
                 this.send(player.socket, data);
+            else if (!world)
+                this.send(player.socket, data);
+
         }
     }
 
-    sendToAll(data) {
-        for (let player of this.users) {
-            this.send(player.socket, data);
-        }
-    }
-
-    sendToAllExcept(user, data) {
+    sendToAllExcept(user, data, world) {
         for (let player of this.users) {
             if (player.name != user.name)
-                this.send(player.socket, data);
+                if (world && player.world == world)
+                    this.send(player.socket, data);
+                else if (!world)
+                    this.send(player.socket, data);
         }
     }
 }
