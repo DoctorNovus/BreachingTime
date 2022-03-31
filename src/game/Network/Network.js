@@ -94,6 +94,10 @@ export class Network extends Singleton {
                 case "chat":
                     MainGame.instance.onMessage(data);
                     break;
+
+                case "worldMenu":
+                    MainGame.instance.onWorldMenu(data);
+                    break;
                     
                 default:
                     console.log(`Unknown message type: ${type}`);

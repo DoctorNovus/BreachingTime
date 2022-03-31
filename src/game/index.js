@@ -23,4 +23,8 @@ export class MainGame extends Singleton {
     onMessage(data){
         console.log(data);
     }
+
+    onWorldMenu(data){
+        console.log(data);
+    }
 }

@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import './App.css';
 import { MainGame } from '../game';
 import { ChatBox } from './chatbox/ChatBox';
+import WorldMenu from './worldmenu/WorldMenu';
 
 const chatbox = React.createRef();
 const status = React.createRef();
@@ -12,6 +13,10 @@ export function App() {
     const [loggedIn, setLoggedIn] = React.useState(false);
     const [started, setStarted] = React.useState(false);
     const [username, setUsername] = React.useState("");
+    const [selected, setSelected] = React.useState("");
+    const [worlds, setWorlds] = React.useState([]);
+
+    console.log(selected);
 
     return (
         <div className="main">
@@ -38,12 +43,13 @@ export function App() {
                 </div>
                 <div className={`main-first-game ${loggedIn ? "" : "hidden"}`}>
                     <button id="startButton" onClick={() => {
-                        startGame.bind(this)(setStarted, username);
+                        startGame.bind(this)(setStarted, username, setWorlds);
                     }}>Start</button>
                 </div>
             </div>
             <div className={`main-second ${started ? "" : "hidden"}`}>
-                <ChatBox ref={chatbox} />
+                <WorldMenu worlds={worlds} setSelected={setSelected} shown={selected.length == 0 ? true : false} />
+                <ChatBox ref={chatbox} shown={selected.length > 0 ? true : false} />
             </div>
         </div>
     );
@@ -115,12 +121,19 @@ export async function register(e, setLoggedIn, setUsername) {
     }
 }
 
-export function startGame(setStarted, username) {
+export function startGame(setStarted, username, setWorlds) {
     setStarted(true);
 
     let game = new MainGame();
+
     MainGame.instance.onMessage = (data) => {
         chatbox.current.chat(data);
     };
+
+    MainGame.instance.onWorldMenu = (data) => {
+        let { worlds } = data;
+        setWorlds(worlds);
+    };
+
     game.start(username);
 }

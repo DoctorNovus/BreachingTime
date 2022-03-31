@@ -43,13 +43,32 @@ export class Player extends Entity {
             this.animate("walking", -1);
         else if (direction == "right")
             this.animate("walking", 1);
-        else
-            this.animate("idle", 1);
+        else if (direction == "up") {
+            if (this.currentAnim != "up") {
+                this.animate("jump", 1, 80, { x: 0.75, y: 0.75 }, false);
+            } else {
+                this.animate("jump_high", 1, 80, { x: 0.75, y: 0.75 }, false);
+            }
+        }
+        else if (direction == "down") {
+            if (this.currentAnim != "down") {
+                this.animate("fall", 1, 80, { x: 0.75, y: 0.75 }, false);
+            } else {
+                this.animate("fall_low", 1, 80, { x: 0.75, y: 0.75 }, false);
+            }
+        }
+        else {
+            this.animate("idle", 1, 10, { x: 0.5, y: 0.5 }, true);
+        }
+
+        this.currentAnim = direction;
     }
 
-    animate(animation, direction) {
-        this.sprite.play(animation, 10, true);
+    animate(animation, direction, speed = 10, origin, loop = true) {
+        this.sprite.play(animation, speed, loop);
         this.sprite.setScale(direction, 1);
+        if (origin)
+            this.sprite.setOrigin(origin.x, origin.y);
     }
 
     destroy() {

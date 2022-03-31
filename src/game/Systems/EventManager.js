@@ -55,8 +55,7 @@ export class EventManager extends Singleton {
                     "idle4",
                     "idle5",
                     "idle6",
-                    "idle7",
-                    "idle8"
+                    "idle7"
                 ]
             },
             {
@@ -71,6 +70,43 @@ export class EventManager extends Singleton {
                     "walking7",
                     "walking8"
                 ],
+            },
+            {
+                key: "jump",
+                route: "jump",
+                frames: [
+                    "jump1",
+                    "jump2",
+                    "jump3",
+                    "jump4",
+                    "jump5",
+                    "jump6",
+                    "jump7"
+                ],
+            },
+            {
+                key: "fall",
+                route: "jump",
+                frames: [
+                    "jump8",
+                    "jump9",
+                    "jump10",
+                    "jump11"
+                ],
+            },
+            {
+                key: "jump_high",
+                route: "jump",
+                frames: [
+                    "jump6",
+                ]
+            },
+            {
+                key: "fall_low",
+                route: "jump",
+                frames: [
+                    "jump10",
+                ]
             }];
     }
 }

@@ -1,84 +1,89 @@
 .chatbox {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 30vh;
-    overflow: hidden;
-    background-color: transparent;
-    padding: 1rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 30vh;
+  overflow: hidden;
+  background-color: transparent;
+  padding: 1rem;
+  z-index: 998;
 
-    display: grid;
-    grid-template-rows: 3vh auto 3vh;
+  display: grid;
+  grid-template-rows: 3vh auto 3vh;
 }
 
 .chatbox-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .chatbox-header-tab {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 0.5rem;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
-    cursor: pointer;
-    margin-right: 1rem;
-    color: white;
-    background-color: rgb(8, 71, 107);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  cursor: pointer;
+  margin-right: 1rem;
+  color: white;
+  background-color: rgb(8, 71, 107);
 }
 
-.chatbox-header-tab:not(.active){
-    background-color: rgb(82, 153, 194);
+.chatbox-header-tab:not(.active) {
+  background-color: rgb(82, 153, 194);
 }
 
 .chatbox-body-messages {
-    overflow-y: scroll;
-    height: 22vh;
-    padding: 1rem;
-    padding-bottom: 2rem;
-    background-color: rgba(255, 255, 255, 0.2);
+  overflow-y: scroll;
+  height: 22vh;
+  padding: 1rem;
+  padding-bottom: 2rem;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .chatbox-body {
-    padding-right: 2rem;
-    padding-bottom: 0.75rem;
-    margin-bottom: -1.5rem;
+  padding-right: 2rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: -1.5rem;
 }
 
 ::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .chatbox-body-message {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .chatbox-body-messages {
-    border: 1px solid white;
+  border: 1px solid white;
 }
 
 .chatbox-footer {
-    margin-top: -1.25rem;
-    padding-left: 2.5rem;
+  margin-top: -1.25rem;
+  padding-left: 2.5rem;
 }
 
 .chatbox input {
-    width: 90vw;
-    height: 1.75rem;
-    background-color: rgba(0, 0, 0, 0.8);
-    border: 1px solid lightgray;
-    padding-left: 1rem;
-    color: white;
+  width: 90vw;
+  height: 1.75rem;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid lightgray;
+  padding-left: 1rem;
+  color: white;
 }
 
 .chatbox-body-message {
-    color: white;
+  color: white;
+}
+
+.hidden {
+  display: none;
 }

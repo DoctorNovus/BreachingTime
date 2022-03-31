@@ -49,7 +49,7 @@ export class Movement {
 
                 let speed = 2;
 
-                if(user.speed)
+                if (user.speed)
                     speed = user.speed;
 
                 rect.x += que.x * speed;
@@ -64,13 +64,19 @@ export class Movement {
                 user.y += que.y * speed;
 
                 let direction = "idle";
-                if (que.x == 0)
+                if (que.x == 0 && que.y == 0)
                     direction = "idle";
                 else {
-                    if (que.x > 0)
-                        direction = "right";
+                    if (que.y == 0)
+                        if (que.x > 0)
+                            direction = "right";
+                        else
+                            direction = "left";
                     else
-                        direction = "left";
+                        if(que.y > 0)
+                            direction = "down";
+                        else
+                            direction = "up";
                 }
 
                 net.sendToAll({
@@ -100,11 +106,24 @@ export class Movement {
 
                 rect.setPosition(user.x, user.y + 1);
 
-
                 if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
+                    if(!user.grounded){
+                        net.sendToAll({
+                            type: "move",
+                            data: {
+                                name: user.name,
+                                x: user.x,
+                                y: user.y,
+                                direction: "idle"
+                            }
+                        });
+
+                        user.grounded = true;
+                    }
                     return;
                 } else {
+                    user.grounded = false;
                     user.y = rect.y;
 
                     net.sendToAll({
@@ -113,7 +132,7 @@ export class Movement {
                             name: user.name,
                             x: user.x,
                             y: user.y,
-                            direction: "idle"
+                            direction: "down"
                         }
                     });
                 }

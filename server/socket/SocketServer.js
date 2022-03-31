@@ -1,6 +1,5 @@
 import WebSocket from "ws";
 import { Singleton } from "./systems/Singleton";
-import { Auth } from "./auth/Auth";
 import { Boot } from "./boot/Boot";
 import { Movement } from "./engines/Movement";
 import { Map } from "./engines/Map/Map";
@@ -22,6 +21,8 @@ export class SocketServer extends Singleton {
             await Database.instance.connect();
 
         this.users = [];
+        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30}, { name: "HiroWorld2", players: [], maxPlayers: 30}];
+
         this.movement = new Movement(this);
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
         this.map = new Map(50, 50);

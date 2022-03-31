@@ -164,45 +164,56 @@ class Server {
 }
 
 class Boot extends Singleton {
-    login(server, user) {
-        console.log(`${user.name} logged in`);
-        
+
+    login(server, user){
+        let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
         server.send(user.socket, {
-            type: "selfJoin",
+            type: "worldMenu",
             data: {
-                name: user.name,
-                x: user.x,
-                y: user.y
-            }
-        });
-
-        for (let player of server.users) {
-            server.send(user.socket, {
-                type: "playerJoin",
-                data: {
-                    name: player.name,
-                    x: player.x,
-                    y: player.y
-                }
-            });
-        }
-
-        server.sendToAllExcept(user, {
-            type: "playerJoin",
-            data: {
-                name: user.name,
-                x: user.x,
-                y: user.y
-            }
-        });
-
-        server.send(user.socket, {
-            type: "loadMap",
-            data: {
-                map: server.map.inst
+                worlds
             }
         });
     }
+
+    // login(server, user) {
+    //     console.log(`${user.name} logged in`);
+        
+    //     server.send(user.socket, {
+    //         type: "selfJoin",
+    //         data: {
+    //             name: user.name,
+    //             x: user.x,
+    //             y: user.y
+    //         }
+    //     });
+
+    //     for (let player of server.users) {
+    //         server.send(user.socket, {
+    //             type: "playerJoin",
+    //             data: {
+    //                 name: player.name,
+    //                 x: player.x,
+    //                 y: player.y
+    //             }
+    //         });
+    //     }
+
+    //     server.sendToAllExcept(user, {
+    //         type: "playerJoin",
+    //         data: {
+    //             name: user.name,
+    //             x: user.x,
+    //             y: user.y
+    //         }
+    //     });
+
+    //     server.send(user.socket, {
+    //         type: "loadMap",
+    //         data: {
+    //             map: server.map.inst
+    //         }
+    //     });
+    // }
 }
 
 class Rectangle {
@@ -335,7 +346,7 @@ class Movement {
 
                 let speed = 2;
 
-                if(user.speed)
+                if (user.speed)
                     speed = user.speed;
 
                 rect.x += que.x * speed;
@@ -350,13 +361,19 @@ class Movement {
                 user.y += que.y * speed;
 
                 let direction = "idle";
-                if (que.x == 0)
+                if (que.x == 0 && que.y == 0)
                     direction = "idle";
                 else {
-                    if (que.x > 0)
-                        direction = "right";
+                    if (que.y == 0)
+                        if (que.x > 0)
+                            direction = "right";
+                        else
+                            direction = "left";
                     else
-                        direction = "left";
+                        if(que.y > 0)
+                            direction = "down";
+                        else
+                            direction = "up";
                 }
 
                 net.sendToAll({
@@ -386,11 +403,24 @@ class Movement {
 
                 rect.setPosition(user.x, user.y + 1);
 
-
                 if (this.checkCollision(rect, net.map)) {
                     rect.setPosition(user.x, user.y);
+                    if(!user.grounded){
+                        net.sendToAll({
+                            type: "move",
+                            data: {
+                                name: user.name,
+                                x: user.x,
+                                y: user.y,
+                                direction: "idle"
+                            }
+                        });
+
+                        user.grounded = true;
+                    }
                     return;
                 } else {
+                    user.grounded = false;
                     user.y = rect.y;
 
                     net.sendToAll({
@@ -399,7 +429,7 @@ class Movement {
                             name: user.name,
                             x: user.x,
                             y: user.y,
-                            direction: "idle"
+                            direction: "down"
                         }
                     });
                 }
@@ -615,6 +645,8 @@ class SocketServer extends Singleton {
             await Database.instance.connect();
 
         this.users = [];
+        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30}, { name: "HiroWorld2", players: [], maxPlayers: 30}];
+
         this.movement = new Movement(this);
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
         this.map = new Map(50, 50);

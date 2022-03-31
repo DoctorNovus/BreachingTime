@@ -14,8 +14,10 @@ export class ChatBox extends Component {
     }
 
     render() {
+        let { shown } = this.props;
+        
         return (
-            <div className="chatbox">
+            <div className={`chatbox ${shown ? "" : "hidden"}`}>
                 <div className="chatbox-header">
                     <div className={`chatbox-header-tab ${this.state.activeChat == 0 ? "active" : ""}`} onClick={() => this.selectChat(0)}>Global Chat</div>
                     <div className={`chatbox-header-tab ${this.state.activeChat == 1 ? "active" : ""}`} onClick={() => this.selectChat(1)}>Guild Chat</div>

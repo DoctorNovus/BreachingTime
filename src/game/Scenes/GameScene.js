@@ -18,7 +18,7 @@ export class GameScene extends Phaser.Scene {
         for (let i = 0; i < EventManager.instance.animations.length; i++) {
             let anim = EventManager.instance.animations[i];
             for (let j = 0; j < anim.frames.length; j++) {
-                this.load.image(anim.frames[j], `assets/animations/${anim.key}/${anim.frames[j]}.png`);
+                this.load.image(anim.frames[j], `assets/animations/${anim.route ? anim.route : anim.key}/${anim.frames[j]}.png`);
             }
         }
 
@@ -50,7 +50,7 @@ export class GameScene extends Phaser.Scene {
                 key: anim.key,
                 frames: anim.frames.map(an => ({ key: an })),
                 frameRate: 10,
-                repeat: -1
+                repeat: anim.repeat ? anim.repeat : -1
             });
         }
 
