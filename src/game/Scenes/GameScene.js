@@ -293,6 +293,21 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
+        for(let block of BaseGame.instance.blocks.parts){
+            block = block.value;
+            let i = this.cameras.main.worldView.contains(block.x, block.y);
+            let l = this.cameras.main.worldView.contains(block.x - 32, block.y);
+            let r = this.cameras.main.worldView.contains(block.x + 32, block.y);
+            let t = this.cameras.main.worldView.contains(block.x, block.y - 32);
+            let b = this.cameras.main.worldView.contains(block.x, block.y + 32);
+
+            if(i || l || r || t || b){
+                block.visible = true;
+            } else {
+                block.visible = false;
+            }
+        }
+
 
         // let player = BaseGame.instance.findObject("player");
         // if (player) {

@@ -46,6 +46,7 @@ export class EventManager extends Singleton {
         ];
 
         EventManager.instance.animations = [
+            // Player Animations
             {
                 key: "idle",
                 frames: [
@@ -55,7 +56,10 @@ export class EventManager extends Singleton {
                     "idle4",
                     "idle5",
                     "idle6",
-                    "idle7"
+                    "idle7",
+                    "idle8",
+                    "idle9",
+                    "idle10"
                 ]
             },
             {
@@ -107,6 +111,29 @@ export class EventManager extends Singleton {
                 frames: [
                     "jump10",
                 ]
-            }];
+            },
+
+            // Tool Animations
+            {
+                key: "fire_sword",
+                route: "weapons/fire_sword",
+                frames: [
+                    "fire_sword1",
+                    "fire_sword2",
+                    "fire_sword3",
+                    "fire_sword4",
+                    "fire_sword5",
+                    "fire_sword6",
+                    "fire_sword7",
+                    "fire_sword8",
+                    "fire_sword9",
+                    "fire_sword10",
+                ],
+                origin: {
+                    x: 0,
+                    y: 0
+                }
+            }
+        ];
     }
 }
