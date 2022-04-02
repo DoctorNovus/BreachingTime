@@ -67,6 +67,7 @@ export class SocketServer extends Singleton {
                         break;
 
                     case "leftInteract":
+                        // FIXME: APPLY SINGLE TO MULTIPLE
                         let til = this.map.interact(data, this);
                         if (til)
                             this.sendToAll({
@@ -99,7 +100,7 @@ export class SocketServer extends Singleton {
                                 name: user.name,
                                 message: data.message
                             }
-                        });
+                        }, user.world);
                         break;
 
                     case "worldSelect":
@@ -116,6 +117,12 @@ export class SocketServer extends Singleton {
             socket.on("close", () => {
                 let user = this.users.find(user => user.socket == socket);
                 if (user) {
+                    if (user.world) {
+                        let world = this.worlds.find(world => world.name == user.world);
+                        if (world)
+                            world.players.splice(world.players.indexOf(user.name), 1);
+                    }
+
                     this.users.splice(this.users.indexOf(user), 1);
                     this.sendToAll({
                         type: "playerLeave",

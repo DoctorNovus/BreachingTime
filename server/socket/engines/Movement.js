@@ -87,7 +87,7 @@ export class Movement {
                         y: user.y,
                         direction
                     }
-                });
+                }, user.world);
             }
         }
 
@@ -117,7 +117,7 @@ export class Movement {
                                 y: user.y,
                                 direction: "idle"
                             }
-                        });
+                        }, user.world);
 
                         user.grounded = true;
                     }
@@ -134,7 +134,7 @@ export class Movement {
                             y: user.y,
                             direction: "down"
                         }
-                    });
+                    }, user.world);
                 }
             }
         }
@@ -157,7 +157,7 @@ export class Movement {
                     y: user.y,
                     direction: "idle"
                 }
-            });
+            }, user.world);
         } else {
             let queu = {
                 name: user.name,

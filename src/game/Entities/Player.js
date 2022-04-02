@@ -73,5 +73,6 @@ export class Player extends Entity {
 
     destroy() {
         this.sprite.destroy();
+        this.name.destroy();
     }
 }

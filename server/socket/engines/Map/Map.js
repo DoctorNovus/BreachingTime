@@ -47,6 +47,7 @@ export class Map {
 
                         til.healing = setTimeout(() => {
                             til.health = 3;
+                            // FIXME: find way to send to all clients in world
                             serv.sendToAll({
                                 type: "setChange",
                                 data: {
