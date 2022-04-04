@@ -17,6 +17,9 @@ export class Movement {
             }
         }
 
+        if(rect.x < 0 || rect.x > (map.width * 32) - 32 || rect.y < (-1 * map.height * 32) || rect.y > map.height * 32)
+            collides = true;
+
         return collides;
     }
 
