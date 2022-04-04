@@ -181,39 +181,7 @@ export class GameScene extends Phaser.Scene {
         });
 
         this.input.on("pointerdown", (pointer) => {
-            // let { worldX, worldY } = pointer;
-            // worldX = Math.floor(worldX / 32) * 32;
-            // worldY = Math.floor(worldY / 32) * 32;
-            // console.log(worldX, worldY);
 
-            let instancedBlock = BaseGame.instance.instancedBlock;
-
-            switch (pointer.button) {
-                // Left
-                case 0:
-                    Network.instance.send({
-                        type: "leftInteract",
-                        data: {
-                            name: instancedBlock.name,
-                            x: instancedBlock.x,
-                            y: instancedBlock.y
-                        }
-                    });
-                    break;
-
-                // Right
-
-                case 2:
-                    Network.instance.send({
-                        type: "rightInteract",
-                        data: {
-                            name: instancedBlock.name,
-                            x: instancedBlock.x,
-                            y: instancedBlock.y
-                        }
-                    });
-                    break;
-            }
         })
     }
 
@@ -244,8 +212,33 @@ export class GameScene extends Phaser.Scene {
                     if (BaseGame.instance.anims[`${block.name}`]) {
                         bl.play(`${block.name}_anim`, 10, true);
                     }
-                    bl.on("pointerover", () => {
-                        BaseGame.instance.instancedBlock = block;
+                    bl.on("pointerdown", (pointer) => {
+                        switch (pointer.button) {
+                            // Left
+                            case 0:
+                                Network.instance.send({
+                                    type: "leftInteract",
+                                    data: {
+                                        name: block.name,
+                                        x: block.x,
+                                        y: block.y
+                                    }
+                                });
+                                break;
+            
+                            // Right
+            
+                            case 2:
+                                Network.instance.send({
+                                    type: "rightInteract",
+                                    data: {
+                                        name: block.name,
+                                        x: block.x,
+                                        y: block.y
+                                    }
+                                });
+                                break;
+                        }
                     });
 
                     bl.setDepth(-1);

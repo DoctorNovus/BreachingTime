@@ -632,7 +632,7 @@ class Map {
         }
     }
 
-    interact(tile, serv) {
+    interact(world, tile, serv) {
         for (let x = 0; x < this._tiles.parts.length; x++) {
             let til = this._tiles.parts[x].value;
             if (til.name == tile.name && til.x == tile.x && til.y == tile.y) {
@@ -649,7 +649,6 @@ class Map {
 
                         til.healing = setTimeout(() => {
                             til.health = 3;
-                            // FIXME: find way to send to all clients in world
                             serv.sendToAll({
                                 type: "setChange",
                                 data: {
@@ -658,7 +657,7 @@ class Map {
                                     y: til.y,
                                     health: til.health
                                 }
-                            });
+                            }, world.name);
                         }, 2500);
 
                         if (til.health > 0) {
@@ -706,6 +705,7 @@ class SocketServer extends Singleton {
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
                 let { type, data } = JSON.parse(message);
+                let user = {};
                 switch (type) {
                     case "login":
                         if (UserRegistry.instance.getUser(data.name)) {
@@ -716,7 +716,7 @@ class SocketServer extends Singleton {
                                 }
                             });
 
-                            let user = {
+                            user = {
                                 name: data.name,
                                 socket,
                                 x: this.map.spawnTile.x,
@@ -743,8 +743,12 @@ class SocketServer extends Singleton {
                         break;
 
                     case "leftInteract":
-                        // FIXME: APPLY SINGLE TO MULTIPLE
-                        let til = this.map.interact(data, this);
+                        user = this.users.find(user => user.socket == socket);
+                        let world = this.worlds.find(world => world.name == user.world);
+                        if(!world.map)
+                            world.map = new Map(50, 50);
+
+                        let til = world.map.interact(world, data, this);
                         if (til)
                             this.sendToAll({
                                 type: "setChange",
@@ -754,9 +758,9 @@ class SocketServer extends Singleton {
                                     y: til.y,
                                     health: til.health
                                 }
-                            });
+                            }, world.name);
                         else {
-                            this.map.delete(data.x, data.y);
+                            world.map.delete(data.x, data.y);
                             this.sendToAll({
                                 type: "deleteBlock",
                                 data: {
@@ -764,12 +768,12 @@ class SocketServer extends Singleton {
                                     x: data.x,
                                     y: data.y,
                                 }
-                            });
+                            }, world.name);
                         }
                         break;
 
                     case "chat":
-                        let user = this.users.find(user => user.socket == socket);
+                        user = this.users.find(user => user.socket == socket);
                         this.sendToAll({
                             type: "chat",
                             data: {
