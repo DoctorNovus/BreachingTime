@@ -53,7 +53,7 @@ export class Network extends Singleton {
                     player.setSprite(sprite);
                     player.setName(uText);
                     player.setWeapon(weapon);
-                    player.animate("idle");
+                    player.animate("idle", 1, true);
                     instanced.addEntity(player);
                     BaseGame.instance.camera.startFollow(player.sprite);
                     break;
@@ -76,7 +76,7 @@ export class Network extends Singleton {
                         player.setSprite(sprite);
                         player.setName(uText);
                         player.setWeapon(weapon);
-                        player.animate("idle");
+                        player.animate("idle", 1, true);
                         instanced.addEntity(player);
                     }
                     break;

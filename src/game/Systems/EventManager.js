@@ -115,7 +115,7 @@ export class EventManager extends Singleton {
 
             // Tool Animations
             {
-                key: "fire_sword_idle",
+                key: "fire_sword",
                 route: "weapons/fire_sword",
                 frames: [
                     "fire_sword1",

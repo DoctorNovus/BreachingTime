@@ -1,5 +1,7 @@
+import { BlueprintList } from "../Animations/BlueprintList";
 import { BaseGame } from "../Systems/BaseGame";
 import { Entity } from "./Entity";
+import { CustomAnimations } from "../Animations/CustomAnimations";
 
 export class Player extends Entity {
     constructor(id, x, y, width = 32, height = 32) {
@@ -71,32 +73,53 @@ export class Player extends Entity {
             this.animate("walking", 1);
         else if (direction == "up") {
             if (this.currentAnim != "up") {
-                this.animate("jump", 1, 80, { x: 0.75, y: 0.75 }, false);
+                this.animate("jump", 1);
             } else {
-                this.animate("jump_high", 1, 80, { x: 0.75, y: 0.75 }, false);
+                this.animate("jump_high", 1);
             }
         }
         else if (direction == "down") {
             if (this.currentAnim != "down") {
-                this.animate("fall", 1, 80, { x: 0.75, y: 0.75 }, false);
+                this.animate("fall", 1);
             } else {
-                this.animate("fall_low", 1, 80, { x: 0.75, y: 0.75 }, false);
+                this.animate("fall_low", 1);
             }
         }
         else {
-            this.animate("idle", 1, 10, { x: 0.5, y: 0.5 }, true);
+            this.animate("idle", 1, true);
         }
 
         this.currentAnim = direction;
     }
 
-    animate(animation, direction, speed = 10, origin, loop = true) {
-        this.sprite.anims.playAfterDelay(animation, 1);
+    animate(animation, direction, loop) {
         this.sprite.setScale(direction, 1);
-        if (origin)
-            this.sprite.setOrigin(origin.x, origin.y);
+
         if (this.weapon)
-            this.weapon.sprite.anims.playAfterDelay(`${this.weapon.animation}_${animation}`, 1);
+            this.weapon.sprite.setScale(direction, 1);
+
+        let pp = BlueprintList.instance.getBlueprint(`player_${animation}`);
+        let wp = BlueprintList.instance.getBlueprint(`weapon_${animation}`);
+
+        if (this.looped)
+            clearInterval(this.looped);
+
+        if (!loop) {
+            CustomAnimations.instance.renderOnUpdate(pp, this.sprite);
+
+            if (this.weapon) {
+                CustomAnimations.instance.renderOnUpdate(wp, this.weapon.sprite);
+            }
+        } else {
+            this.looped = setInterval(() => {
+                CustomAnimations.instance.renderOnUpdate(pp, this.sprite);
+
+                if (this.weapon) {
+                    this.weapon.sprite.angle = 0;
+                    CustomAnimations.instance.renderOnUpdate(wp, this.weapon.sprite);
+                }
+            });
+        }
     }
 
     destroy() {
