@@ -93,6 +93,7 @@ export class GameScene extends Phaser.Scene {
         // player.animate("idle", 1);
 
         InputSystem.instance.linkEvent("keydown", (e) => {
+            let newZoom;
             switch (e.key) {
                 case "w":
                     Network.instance.send({
@@ -132,6 +133,26 @@ export class GameScene extends Phaser.Scene {
                             y: 0
                         }
                     });
+                    break;
+
+                case "-":
+                    newZoom = this.cameras.main.zoom - .1;
+                    console.log(newZoom);
+                    if (newZoom > 0.6) {
+                        this.cameras.main.zoom = newZoom;
+                    }
+                    break;
+
+                case "=":
+                    newZoom = this.cameras.main.zoom + .1;
+                    console.log(newZoom);
+                    if (newZoom < 3) {
+                        this.cameras.main.zoom = newZoom;
+                    }
+                    break;
+
+                default:
+                    console.log(`Unknown key: ${e.key}`);
                     break;
             }
         });
@@ -179,10 +200,6 @@ export class GameScene extends Phaser.Scene {
                     break;
             }
         });
-
-        this.input.on("pointerdown", (pointer) => {
-
-        })
     }
 
     update() {
@@ -225,9 +242,9 @@ export class GameScene extends Phaser.Scene {
                                     }
                                 });
                                 break;
-            
+
                             // Right
-            
+
                             case 2:
                                 Network.instance.send({
                                     type: "rightInteract",
@@ -286,7 +303,7 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        for(let block of BaseGame.instance.blocks.parts){
+        for (let block of BaseGame.instance.blocks.parts) {
             block = block.value;
             let i = this.cameras.main.worldView.contains(block.x, block.y);
             let l = this.cameras.main.worldView.contains(block.x - 32, block.y);
@@ -294,7 +311,7 @@ export class GameScene extends Phaser.Scene {
             let t = this.cameras.main.worldView.contains(block.x, block.y - 32);
             let b = this.cameras.main.worldView.contains(block.x, block.y + 32);
 
-            if(i || l || r || t || b){
+            if (i || l || r || t || b) {
                 block.visible = true;
             } else {
                 block.visible = false;

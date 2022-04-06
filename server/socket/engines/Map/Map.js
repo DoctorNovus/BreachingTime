@@ -1,4 +1,5 @@
 import { Mapper } from "../../math/Mapper";
+import { WorldGenerator } from "./MapGeneration/WorldGenerator";
 import { Tile } from "./Tile";
 import { TileIndex } from "./TileIndex/TileIndex";
 
@@ -6,19 +7,8 @@ export class Map {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this._tiles = new Mapper();
-
-        for (let i = 0; i < width; i++) {
-            if (i == 0) {
-                let place = Math.floor(Math.random() * height);
-                this.spawnTile = new Tile("portal_sequence", "background", place, i, 32, 32);
-                this._tiles.set(place, i, this.spawnTile);
-            } else {
-                for (let j = 0; j < height; j++) {
-                    this._tiles.set(j, i, new Tile("dirt", "foreground", j, i, 32, 32));
-                }
-            }
-        }
+        this._tiles = new WorldGenerator(width, height, 0.05);
+        this.spawnTile = this._tiles.spawnTile;
     }
 
     get inst() {

@@ -25,6 +25,24 @@ export class Player extends Entity {
         this.name.y = this.y - this.height;
     }
 
+    setWeapon(weapon) {
+        this.weapon = weapon;
+        this.weapon.x = this.x;
+        this.weapon.y = this.y;
+
+        this.weapon.sprite.x = this.weapon.x;
+        this.weapon.sprite.y = this.weapon.y;
+        this.weapon.sprite.setOrigin(this.weapon.origin.x, this.weapon.origin.y);
+    }
+
+    hideWeapon() {
+        this.weapon.sprite.visible = false;
+    }
+
+    showWeapon() {
+        this.weapon.sprite.visible = true;
+    }
+
     canMove() {
         if (!BaseGame.instance.checkCollides(this))
             return true;
@@ -38,6 +56,14 @@ export class Player extends Entity {
 
         this.name.x = x - this.width * .6;
         this.name.y = y - this.height;
+
+        if (this.weapon) {
+            this.weapon.x = x;
+            this.weapon.y = y;
+            this.weapon.sprite.x = this.weapon.x;
+            this.weapon.sprite.y = this.weapon.y;
+            this.weapon.sprite.setOrigin(this.weapon.origin.x, this.weapon.origin.y);
+        }
 
         if (direction == "left")
             this.animate("walking", -1);
@@ -65,14 +91,18 @@ export class Player extends Entity {
     }
 
     animate(animation, direction, speed = 10, origin, loop = true) {
-        this.sprite.play(animation, speed, loop);
+        this.sprite.anims.playAfterDelay(animation, 1);
         this.sprite.setScale(direction, 1);
         if (origin)
             this.sprite.setOrigin(origin.x, origin.y);
+        if (this.weapon)
+            this.weapon.sprite.anims.playAfterDelay(`${this.weapon.animation}_${animation}`, 1);
     }
 
     destroy() {
         this.sprite.destroy();
         this.name.destroy();
+        if (this.weapon)
+            this.weapon.sprite.destroy();
     }
 }

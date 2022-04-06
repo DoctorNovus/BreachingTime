@@ -23,6 +23,7 @@ export class Network extends Singleton {
             let player;
             let sprite;
             let uText;
+            let weapon;
 
             switch (type) {
                 case "login":
@@ -36,7 +37,13 @@ export class Network extends Singleton {
                 case "selfJoin":
                     console.log("Self joined", data.name);
                     player = new Player(data.name, data.x, data.y);
+                    window.globalPlayerEntity = player;
                     sprite = Network.instance.game.add.sprite(data.x, data.y, "idle1");
+                    weapon = {
+                        sprite: Network.instance.game.add.sprite(data.x, data.y, "fire_sword1"),
+                        animation: "fire_sword",
+                        origin: { x: 0.5, y: 0.5 }
+                    };
                     uText = Network.instance.game.add.text(data.x, data.y, data.name, {
                         font: "16px Arial",
                         fill: "#ffffff",
@@ -45,6 +52,7 @@ export class Network extends Singleton {
 
                     player.setSprite(sprite);
                     player.setName(uText);
+                    player.setWeapon(weapon);
                     player.animate("idle");
                     instanced.addEntity(player);
                     BaseGame.instance.camera.startFollow(player.sprite);
@@ -55,6 +63,11 @@ export class Network extends Singleton {
                         console.log("Player joined", data.name);
                         player = new Player(data.name, data.x, data.y);
                         sprite = Network.instance.game.add.sprite(data.x, data.y, "idle1");
+                        weapon = {
+                            sprite: Network.instance.game.add.sprite(data.x, data.y, "fire_sword1"),
+                            animation: "fire_sword",
+                            origin: { x: 0.5, y: 0.5 }
+                        };
                         uText = Network.instance.game.add.text(data.x, data.y, data.name, {
                             font: "16px Arial",
                             fill: "#ffffff",
@@ -62,6 +75,7 @@ export class Network extends Singleton {
                         });
                         player.setSprite(sprite);
                         player.setName(uText);
+                        player.setWeapon(weapon);
                         player.animate("idle");
                         instanced.addEntity(player);
                     }

@@ -4,6 +4,7 @@ var http = require('http');
 var express = require('express');
 var mongodb = require('mongodb');
 var bcrypt = require('bcrypt');
+var simplexNoise = require('simplex-noise');
 var WebSocket = require('ws');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -163,6 +164,236 @@ class Server {
     }
 }
 
+class Mapper {
+    constructor() {
+        this.parts = [];
+    }
+
+    loop(callback) {
+        for (let i = 0; i < this.parts.length; i++) {
+            callback(this.parts[i]);
+        }
+    }
+
+    set(x, y, value) {
+        if (!this.get(x, y))
+            this.parts.push({ x, y, value });
+        else
+            this.parts.find(part => part.x === x && part.y === y).value = value;
+
+        return this.get(x, y);
+    }
+
+    get(x, y) {
+        let part = this.parts.find(part => part.x == x && part.y == y);
+        if (part)
+            return part;
+        else
+            return null;
+    }
+
+
+    add(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+
+        part += value;
+        this.set(x, y, part);
+        return part;
+    }
+
+    divide(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+        part /= value;
+        this.set(x, y, part);
+        return part;
+    }
+
+}
+
+class Rectangle {
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     */
+    constructor(x, y, width, height) {
+        /** x location of the rectangle */
+        this.x = x;
+        /** y location of the rectangle */
+        this.y = y;
+        /** width of the rectangle */
+        this.width = width;
+        /** height of the rectangle */
+        this.height = height;
+        /** right side of the rectangle */
+        this.right = this.x + this.width;
+        /** bottom side of the rectangle */
+        this.bottom = this.y + this.height;
+    }
+
+    /**
+     * check if the rectangle overlaps another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} are the rectangles overlapping
+     */
+    overlaps(rectangle) {
+        return (this.x < rectangle.x + rectangle.width &&
+            this.x + this.width > rectangle.x &&
+            this.y < rectangle.y + rectangle.height &&
+            this.y + this.height > rectangle.y);
+    }
+
+    /**
+     * check if the rectangle is inside another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} is the rectangle inside the other rectangle
+     */
+    within(rectangle) {
+        return (rectangle.x <= this.x &&
+            rectangle.right >= this.right &&
+            rectangle.y <= this.y &&
+            rectangle.bottom >= this.bottom);
+    }
+
+    /**
+     * check if the coordinates are inside this rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     * @return {boolean} does the rectangle contain the coordinates
+     */
+    contains(x, y) {
+        return (x >= this.x &&
+            x <= this.right &&
+            y >= this.y &&
+            y <= this.bottom);
+    }
+
+    /**
+     * set the position of the rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * set the size of the rectangle
+     * @param {number} width new rectangle width
+     * @param {number} height new rectangle height
+     */
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class Tile {
+    constructor(name, layer, x, y, width, height){
+        this.name = name;
+        this.layer = layer;
+        this.x = x * width;
+        this.y = y * height;
+        this.width = width || 32;
+        this.height = height || 32;
+
+        this.rect = new Rectangle(this.x, this.y, this.width, this.height);
+        this.health = 3;
+    }
+}
+
+class WorldGenerator {
+    mapLength = 50;
+    amplitude = 50;
+    frequency = 0.1;
+
+    constructor(mapLength, amplitude, frequency) {
+        this.mapLength = mapLength;
+        this.amplitude = amplitude;
+        this.frequency = frequency;
+
+        this.simplex = new simplexNoise.SimplexNoise();
+        this.map = new Mapper();
+
+        this.GenerateMap1DNoise();
+
+        return this.map;
+    }
+
+    GetNoiseValue(x, y) {
+        return this.amplitude * this.simplex.noise2D(x * this.frequency, y * this.frequency);
+    }
+
+    createSpawnTile(tried = []) {
+        let place = Math.floor(Math.random() * this.amplitude);
+        if (!tried.includes(place)) {
+            tried.push(place);
+            if (this.map.get(place, 1)) {
+                this.spawnTile = new Tile("portal_sequence", "background", place, 0, 32, 32);
+                return this.spawnTile;
+            } else {
+                return this.createSpawnTile(tried);
+            }
+        } else {
+            return this.createSpawnTile(tried);
+        }
+    }
+
+    GenerateMap1DNoise() {
+        for (let x = 0; x < this.mapLength; x++) {
+            let noise = this.GetNoiseValue(x, 1);
+            let yCoordinate = Math.floor(noise);
+            for (let y = 0; y <= yCoordinate; y++) {
+                if (y != 0)
+                    this.map.set(x, y, new Tile("air", "foreground", x, y, 32, 32));
+            }
+        }
+
+        this.map.parts = this.map.parts.filter(tile => tile.value != undefined);
+
+        this.loopMap((x, y) => {
+            if (y == 0)
+                return;
+
+            if (this.map.get(x, y) == undefined) {
+                this.map.set(x, y, new Tile("dirt", "foreground", x, y, 32, 32));
+            } else {
+                this.map.set(x, y, undefined);
+            }
+        });
+
+        this.loopMap((x, y) => {
+            if (this.map.get(x, y))
+                if (this.map.get(x, y).name == "air") {
+                    this.map.parts.splice(this.map.parts.indexOf(this.map.get(x, y)), 1);
+                }
+        });
+
+        this.map.parts = this.map.parts.filter(tile => tile.value != undefined);
+
+        this.spawnTile = this.createSpawnTile();
+        this.map.set(this.spawnTile.x, this.spawnTile.y, this.spawnTile);
+        this.map.spawnTile = this.spawnTile;
+    }
+
+    loopMap(callback) {
+        for (let x = 0; x < this.mapLength; x++) {
+            if (x != 0) {
+                for (let y = 0; y < this.amplitude; y++) {
+                    callback(x, y);
+                }
+            }
+        }
+    }
+}
+
 class Boot extends Singleton {
 
     login(server, user) {
@@ -265,87 +496,6 @@ class Boot extends Singleton {
     //         }
     //     });
     // }
-}
-
-class Rectangle {
-
-    /**
-     * @param {number} x 
-     * @param {number} y 
-     * @param {number} width 
-     * @param {number} height 
-     */
-    constructor(x, y, width, height) {
-        /** x location of the rectangle */
-        this.x = x;
-        /** y location of the rectangle */
-        this.y = y;
-        /** width of the rectangle */
-        this.width = width;
-        /** height of the rectangle */
-        this.height = height;
-        /** right side of the rectangle */
-        this.right = this.x + this.width;
-        /** bottom side of the rectangle */
-        this.bottom = this.y + this.height;
-    }
-
-    /**
-     * check if the rectangle overlaps another rectangle
-     * @param {Rectangle} rectangle rectangle to compare with
-     * @return {boolean} are the rectangles overlapping
-     */
-    overlaps(rectangle) {
-        return (this.x < rectangle.x + rectangle.width &&
-            this.x + this.width > rectangle.x &&
-            this.y < rectangle.y + rectangle.height &&
-            this.y + this.height > rectangle.y);
-    }
-
-    /**
-     * check if the rectangle is inside another rectangle
-     * @param {Rectangle} rectangle rectangle to compare with
-     * @return {boolean} is the rectangle inside the other rectangle
-     */
-    within(rectangle) {
-        return (rectangle.x <= this.x &&
-            rectangle.right >= this.right &&
-            rectangle.y <= this.y &&
-            rectangle.bottom >= this.bottom);
-    }
-
-    /**
-     * check if the coordinates are inside this rectangle
-     * @param {number} x x coordinate
-     * @param {number} y y coordinate
-     * @return {boolean} does the rectangle contain the coordinates
-     */
-    contains(x, y) {
-        return (x >= this.x &&
-            x <= this.right &&
-            y >= this.y &&
-            y <= this.bottom);
-    }
-
-    /**
-     * set the position of the rectangle
-     * @param {number} x x coordinate
-     * @param {number} y y coordinate
-     */
-    setPosition(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /**
-     * set the size of the rectangle
-     * @param {number} width new rectangle width
-     * @param {number} height new rectangle height
-     */
-    setSize(width, height) {
-        this.width = width;
-        this.height = height;
-    }
 }
 
 class Movement {
@@ -530,70 +680,6 @@ class Movement {
     }
 }
 
-class Mapper {
-    constructor() {
-        this.parts = [];
-    }
-
-    loop(callback) {
-        for (let i = 0; i < this.parts.length; i++) {
-            callback(this.parts[i]);
-        }
-    }
-
-    set(x, y, value) {
-        if (!this.get(x, y))
-            this.parts.push({ x, y, value });
-        else
-            this.parts.find(part => part.x === x && part.y === y).value = value;
-
-        return this.get(x, y);
-    }
-
-    get(x, y) {
-        let part = this.parts.find(part => part.x == x && part.y == y);
-        if (part)
-            return part;
-        else
-            return null;
-    }
-
-
-    add(x, y, value) {
-        let part = this.get(x, y);
-        if (!part)
-            part = 0;
-
-        part += value;
-        this.set(x, y, part);
-        return part;
-    }
-
-    divide(x, y, value) {
-        let part = this.get(x, y);
-        if (!part)
-            part = 0;
-        part /= value;
-        this.set(x, y, part);
-        return part;
-    }
-
-}
-
-class Tile {
-    constructor(name, layer, x, y, width, height){
-        this.name = name;
-        this.layer = layer;
-        this.x = x * width;
-        this.y = y * height;
-        this.width = width || 32;
-        this.height = height || 32;
-
-        this.rect = new Rectangle(this.x, this.y, this.width, this.height);
-        this.health = 3;
-    }
-}
-
 class TileIndexItem {
     constructor(name, type, layer){
         this.name = name;
@@ -611,19 +697,8 @@ class Map {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this._tiles = new Mapper();
-
-        for (let i = 0; i < width; i++) {
-            if (i == 0) {
-                let place = Math.floor(Math.random() * height);
-                this.spawnTile = new Tile("portal_sequence", "background", place, i, 32, 32);
-                this._tiles.set(place, i, this.spawnTile);
-            } else {
-                for (let j = 0; j < height; j++) {
-                    this._tiles.set(j, i, new Tile("dirt", "foreground", j, i, 32, 32));
-                }
-            }
-        }
+        this._tiles = new WorldGenerator(width, height, 0.05);
+        this.spawnTile = this._tiles.spawnTile;
     }
 
     get inst() {
