@@ -16,8 +16,6 @@ export function App() {
     const [selected, setSelected] = React.useState("");
     const [worlds, setWorlds] = React.useState([]);
 
-    console.log(selected);
-
     return (
         <div className="main">
             <div className={`main-first ${started ? "hidden" : ""}`}>
@@ -27,24 +25,25 @@ export function App() {
                         <form onSubmit={(e) => online.bind(this)(e, loginMode, setLoggedIn, setUsername)}>
                             <label ref={status}></label>
                             <label htmlFor="uname">Username</label>
-                            <input type="text" name="uname" />
+                            <input autoComplete="false" className="uname" type="text" name="uname" />
                             <div className={`main-first-login-body-email ${loginMode ? "hidden" : ""}`}>
                                 <label htmlFor="email">Email</label>
-                                <input type="email" name="email" />
+                                <input autoComplete="false" className="email" type="email" name="email" />
                             </div>
                             <label htmlFor="pass">Password</label>
-                            <input type="password" name="pass" />
-                            <input type="submit" value={`${loginMode ? "Login" : "Register"}`} />
+                            <input autoComplete="false" className="pass" type="password" name="pass" />
+                            <input className="submitEntry" type="submit" value={`${loginMode ? "Login" : "Register"}`} />
                             <span onClick={() => {
                                 setLoginMode(!loginMode);
                             }}>Switch to {`${loginMode ? "Register" : "Login"}`}?</span>
                         </form>
                     </div>
                 </div>
-                <div className={`main-first-game ${loggedIn ? "" : "hidden"}`}>
-                    <button id="startButton" onClick={() => {
-                        startGame.bind(this)(setStarted, username, setWorlds);
-                    }}>Start</button>
+                <div className={`main-first-game ${loggedIn ? "" : "hidden"}`} onClick={() => {
+                    startGame.bind(this)(setStarted, username, setWorlds);
+                }}>
+                    <img src="/assets/ui/startBG.gif" alt="startBG" />
+                    <em id="startButton">Click the screen to start...</em>
                 </div>
             </div>
             <div className={`main-second ${started ? "" : "hidden"}`}>

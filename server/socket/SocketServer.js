@@ -2,10 +2,9 @@ import WebSocket from "ws";
 import { Singleton } from "./systems/Singleton";
 import { Boot } from "./boot/Boot";
 import { Movement } from "./engines/Movement";
-import { Map } from "./engines/Map/Map";
 import { Database } from "./database/Database";
 import { UserRegistry } from "../shared/UserRegistry";
-
+import { ZoneManager } from "./zone/ZoneManager";
 export class SocketServer extends Singleton {
     constructor(server) {
         super();
@@ -24,8 +23,9 @@ export class SocketServer extends Singleton {
         this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30 }, { name: "HiroWorld2", players: [], maxPlayers: 30 }];
 
         this.movement = new Movement(this);
+        this.zoneManager = new ZoneManager();
+        
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
-        this.map = new Map(50, 50);
 
         this.wss.on("connection", (socket) => {
             socket.on("message", (message) => {
@@ -44,8 +44,8 @@ export class SocketServer extends Singleton {
                             user = {
                                 name: data.name,
                                 socket,
-                                x: this.map.spawnTile.x,
-                                y: this.map.spawnTile.y,
+                                x: 0,
+                                y: 0,
                                 width: 30,
                                 height: 32
                             };
@@ -70,31 +70,32 @@ export class SocketServer extends Singleton {
                     case "leftInteract":
                         user = this.users.find(user => user.socket == socket);
                         let world = this.worlds.find(world => world.name == user.world);
-                        if(!world.map)
-                            world.map = new Map(50, 50);
+                        console.log(data);
+                        // if(!world.map)
+                        //     world.map = new Map(50, 50);
 
-                        let til = world.map.interact(world, data, this);
-                        if (til)
-                            this.sendToAll({
-                                type: "setChange",
-                                data: {
-                                    name: til.name,
-                                    x: til.x,
-                                    y: til.y,
-                                    health: til.health
-                                }
-                            }, world.name);
-                        else {
-                            world.map.delete(data.x, data.y);
-                            this.sendToAll({
-                                type: "deleteBlock",
-                                data: {
-                                    name: data.name,
-                                    x: data.x,
-                                    y: data.y,
-                                }
-                            }, world.name);
-                        }
+                        // let til = world.map.interact(world, data, this);
+                        // if (til)
+                        //     this.sendToAll({
+                        //         type: "setChange",
+                        //         data: {
+                        //             name: til.name,
+                        //             x: til.x,
+                        //             y: til.y,
+                        //             health: til.health
+                        //         }
+                        //     }, world.name);
+                        // else {
+                        //     world.map.delete(data.x, data.y);
+                        //     this.sendToAll({
+                        //         type: "deleteBlock",
+                        //         data: {
+                        //             name: data.name,
+                        //             x: data.x,
+                        //             y: data.y,
+                        //         }
+                        //     }, world.name);
+                        // }
                         break;
 
                     case "chat":

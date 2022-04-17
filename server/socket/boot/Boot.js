@@ -3,13 +3,21 @@ import { Singleton } from "../systems/Singleton";
 export class Boot extends Singleton {
 
     login(server, user) {
-        let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
+        let zones = server.zoneManager.zones;
         server.send(user.socket, {
             type: "worldMenu",
             data: {
-                worlds
+                worlds: zones.map(zone => ({ name: zone.name, players: zone.players.length, maxPlayers: 50}))
             }
         });
+        
+        // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
+        // server.send(user.socket, {
+        //     type: "worldMenu",
+        //     data: {
+        //         worlds
+        //     }
+        // });
     }
 
     handleWorldSelect(server, socket, name) {

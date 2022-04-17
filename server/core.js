@@ -1,5 +1,4 @@
 import { Server } from './server/Server';
-import { WorldGenerator } from './socket/engines/Map/MapGeneration/WorldGenerator';
 import { SocketServer } from './socket/SocketServer';
 
 (async() => {

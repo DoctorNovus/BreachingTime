@@ -21,13 +21,87 @@
   color: #fff;
 }
 
-.main-first-login-body {
+.main-first-game {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-first-game > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.main-first-game img {
+  width: 100%;
+  height: 100%;
+}
+
+.main-first-game em {
+  width: 100%;
+  height: 100%;
+  margin-top: 80vh;
+  border: 0px;
+  color: lightgoldenrodyellow;
+  font-size: 60px;
+  animation: fadeIn 2s infinite;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.main-first-login {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.main-first {
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+}
+
+.main-first-login-body {
+  display: flex;
+  flex-direction: column;
+  width: 20vw;
+  height: 50vh;
+  background-color: rgb(112, 76, 40);
+  border: 5px solid rgb(211, 179, 128);
+  border-radius: 1.5rem;
+  box-shadow: 3px 3px 10px 0px rgb(195 166 121);
+  color: goldenrod;
+}
+
+.main-first-login-body form > * {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.main-first-login-body h1 {
+  margin-left: 15%;
+  margin-top: 20%;
+  height: 40%;
+  text-align: left;
   width: 100%;
-  height: 100%;
+  margin-bottom: -5%;
 }
 
 .main-first-login-body form {
@@ -35,8 +109,43 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  width: 15vw;
   height: 100%;
+  margin-bottom: 100%;
+  margin-left: 15%;
+  text-align: left;
+}
+
+.main-first-login-body form label,
+.main-first-login-body form div label {
+  display: flex;
+  font-size: 24px;
+  width: 100%;
+  height: 1.5rem;
+  align-items: center;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.uname,
+.email,
+.pass,
+.submitEntry {
+  font-size: 22px;
+  width: 13.5vw;
+  height: 3.5vh;
+  line-height: 3.5vh;
+  border: 1px solid rgb(193, 146, 29);
+  background-color: rgb(112, 76, 40);
+  color: darkorange;
+  padding-left: 1rem;
+}
+
+.main-first-login-body form input::placeholder {
+  background-color: transparent;
 }
 
 .hidden {

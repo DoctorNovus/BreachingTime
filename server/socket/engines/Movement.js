@@ -5,7 +5,7 @@ export class Movement {
         this.queue = [];
     }
 
-    checkCollision(rect, map) {
+    checkCollision(rect, zone) {
         let collides = false;
 
         for (let tile of map._tiles.parts) {
@@ -24,123 +24,123 @@ export class Movement {
     }
 
     runMovementQueue(net) {
-        for (let que of this.queue) {
-            if (!que) return;
+        // for (let que of this.queue) {
+        //     if (!que) return;
 
-            if (que.x == 0 && que.y == 0) {
-                this.queue.splice(this.queue.indexOf(que), 1);
-                return;
-            }
+        //     if (que.x == 0 && que.y == 0) {
+        //         this.queue.splice(this.queue.indexOf(que), 1);
+        //         return;
+        //     }
 
-            if (que.x > 0)
-                que.x = 1;
-            else if (que.x < 0)
-                que.x = -1;
+        //     if (que.x > 0)
+        //         que.x = 1;
+        //     else if (que.x < 0)
+        //         que.x = -1;
 
-            if (que.y > 0)
-                que.y = 1;
-            else if (que.y < 0)
-                que.y = -1;
+        //     if (que.y > 0)
+        //         que.y = 1;
+        //     else if (que.y < 0)
+        //         que.y = -1;
 
-            let user = net.users.find(user => user.name == que.name);
-            if (user) {
-                let rect = user.rect;
-                if (!rect) {
-                    rect = new Rectangle(user.x, user.y, user.width, user.height);
-                    user.rect = rect;
-                }
+        //     let user = net.users.find(user => user.name == que.name);
+        //     if (user) {
+        //         let rect = user.rect;
+        //         if (!rect) {
+        //             rect = new Rectangle(user.x, user.y, user.width, user.height);
+        //             user.rect = rect;
+        //         }
 
-                let speed = 2;
+        //         let speed = 2;
 
-                if (user.speed)
-                    speed = user.speed;
+        //         if (user.speed)
+        //             speed = user.speed;
 
-                rect.x += que.x * speed;
-                rect.y += que.y * speed;
+        //         rect.x += que.x * speed;
+        //         rect.y += que.y * speed;
 
-                if (this.checkCollision(rect, net.map)) {
-                    rect.setPosition(user.x, user.y);
-                    return;
-                }
+        //         if (this.checkCollision(rect, net.map)) {
+        //             rect.setPosition(user.x, user.y);
+        //             return;
+        //         }
 
-                user.x += que.x * speed;
-                user.y += que.y * speed;
+        //         user.x += que.x * speed;
+        //         user.y += que.y * speed;
 
-                let direction = "idle";
-                if (que.x == 0 && que.y == 0)
-                    direction = "idle";
-                else {
-                    if (que.y == 0)
-                        if (que.x > 0)
-                            direction = "right";
-                        else
-                            direction = "left";
-                    else
-                        if(que.y > 0)
-                            direction = "down";
-                        else
-                            direction = "up";
-                }
+        //         let direction = "idle";
+        //         if (que.x == 0 && que.y == 0)
+        //             direction = "idle";
+        //         else {
+        //             if (que.y == 0)
+        //                 if (que.x > 0)
+        //                     direction = "right";
+        //                 else
+        //                     direction = "left";
+        //             else
+        //                 if(que.y > 0)
+        //                     direction = "down";
+        //                 else
+        //                     direction = "up";
+        //         }
 
-                net.sendToAll({
-                    type: "move",
-                    data: {
-                        name: user.name,
-                        x: user.x,
-                        y: user.y,
-                        direction
-                    }
-                }, user.world);
-            }
-        }
+        //         net.sendToAll({
+        //             type: "move",
+        //             data: {
+        //                 name: user.name,
+        //                 x: user.x,
+        //                 y: user.y,
+        //                 direction
+        //             }
+        //         }, user.world);
+        //     }
+        // }
 
-        for (let user of net.users) {
-            let que = this.queue.find(que => que && que.name == user.name);
-            if ((!que) || (que && que.y == 0)) {
-                if (!user.rect)
-                    user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+        // for (let user of net.users) {
+        //     let que = this.queue.find(que => que && que.name == user.name);
+        //     if ((!que) || (que && que.y == 0)) {
+        //         if (!user.rect)
+        //             user.rect = new Rectangle(user.x, user.y, user.width, user.height);
 
-                let rect = user.rect;
+        //         let rect = user.rect;
 
-                if (!rect.width || !rect.height) {
-                    rect.width = 30;
-                    rect.height = 30;
-                }
+        //         if (!rect.width || !rect.height) {
+        //             rect.width = 30;
+        //             rect.height = 30;
+        //         }
 
-                rect.setPosition(user.x, user.y + 1);
+        //         rect.setPosition(user.x, user.y + 1);
 
-                if (this.checkCollision(rect, net.map)) {
-                    rect.setPosition(user.x, user.y);
-                    if(!user.grounded){
-                        net.sendToAll({
-                            type: "move",
-                            data: {
-                                name: user.name,
-                                x: user.x,
-                                y: user.y,
-                                direction: "idle"
-                            }
-                        }, user.world);
+        //         if (this.checkCollision(rect, net.map)) {
+        //             rect.setPosition(user.x, user.y);
+        //             if(!user.grounded){
+        //                 net.sendToAll({
+        //                     type: "move",
+        //                     data: {
+        //                         name: user.name,
+        //                         x: user.x,
+        //                         y: user.y,
+        //                         direction: "idle"
+        //                     }
+        //                 }, user.world);
 
-                        user.grounded = true;
-                    }
-                    return;
-                } else {
-                    user.grounded = false;
-                    user.y = rect.y;
+        //                 user.grounded = true;
+        //             }
+        //             return;
+        //         } else {
+        //             user.grounded = false;
+        //             user.y = rect.y;
 
-                    net.sendToAll({
-                        type: "move",
-                        data: {
-                            name: user.name,
-                            x: user.x,
-                            y: user.y,
-                            direction: "down"
-                        }
-                    }, user.world);
-                }
-            }
-        }
+        //             net.sendToAll({
+        //                 type: "move",
+        //                 data: {
+        //                     name: user.name,
+        //                     x: user.x,
+        //                     y: user.y,
+        //                     direction: "down"
+        //                 }
+        //             }, user.world);
+        //         }
+        //     }
+        // }
     }
 
     movePlayer(net, socket, users, data) {

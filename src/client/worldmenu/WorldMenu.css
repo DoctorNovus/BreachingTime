@@ -14,96 +14,211 @@
   flex-direction: column;
   justify-content: space-evenly;
   align-items: center;
-  background-color: gray;
+  background: rgba(0, 0, 0, 1);
 }
 
 .world-menu-sub {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    width: 55%;
-    height: 15%;
-    border: 1px solid black;
-    background-color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  width: 55%;
+  height: 15%;
 }
 
 .world-menu-title p {
+  position: relative;
   font-size: 2rem;
   font-weight: bold;
-  color: #00bcd4;
+  color: silver;
 }
 
 .world-menu-explore {
-    display: grid;
-    grid-template-rows: 18vh 80vh;
-    grid-gap: 2vh;
-    background-color: silver;
+  display: grid;
+  grid-template-rows: 18vh 80vh;
+  grid-gap: 2vh;
+  background-color: silver;
 }
 
 .world-menu-sort {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 1rem;
-    width: 95%;
-    height: 100%;
-    padding: 1rem;
-    justify-content: center;
-    align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 1rem;
+  width: 95%;
+  height: 100%;
+  padding: 1rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .world-menu-panel {
-    width: 100%;
-    height: 3rem;
-    font-size: 1.5rem;
-    text-align: center;
-    color: #00bcd4;
-    border: 1px solid black;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    background-color: white;
+  width: 100%;
+  height: 3rem;
+  font-size: 1.5rem;
+  text-align: center;
+  color: silver;
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background-color: white;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .world-menu-worlds {
-    width: 100%;
-    height: 100%;
-    background-color: darkgray;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: darkgray;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .world-menu-worldList {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 li {
-    list-style-type: none;
+  list-style-type: none;
 }
 
 .world-menu-world {
-    border: 1px solid black;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-    align-items: center;
-    width: 60vw;
-    height: 4rem;
-    text-align: center;
-    font-size: 2rem;
-    background-color: white;
-    margin-bottom: 1rem;
+  border: 1px solid black;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 60vw;
+  height: 4rem;
+  text-align: center;
+  font-size: 2rem;
+  background-color: white;
+  margin-bottom: 1rem;
+}
+
+.world-menu-search {
+  display: grid;
+  grid-auto-columns: calc(100% - 2rem);
+  grid-template-rows: 10vh 85vh;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  background-color: black;
+}
+
+.world-menu-search form {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 87% 13%;
+  justify-content: center;
+  align-items: center;
+}
+
+.world-menu-search button {
+  width: 5rem;
+  height: 5rem;
+}
+
+.world-menu-search input {
+  height: 5vh;
+  margin-right: 1rem;
+  padding-left: 1rem;
+  background: transparent;
+  color: silver;
+  border: 1px solid goldenrod;
+  border-radius: 0.5rem;
+  border-right: none;
+}
+
+.world-menu-search input::placeholder {
+  color: silver;
+}
+
+.world-menu-search button {
+  height: 5vh;
+  width: auto;
+  background-color: transparent;
+  color: silver;
+  border: 1px solid goldenrod;
+  border-radius: 1rem;
+}
+
+.world-menu-search-results {
+  border: 1px solid goldenrod;
+  height: 100%;
+  width: 100%;
+  border-radius: 1rem;
+  color: silver;
+}
+
+.world-menu-title {
+  display: flex;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.world-menu-title img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.world-menu-search-input,
+.world-menu-search-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.world-menu-search-input img,
+.world-menu-search-button img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.world-menu-search-input *:not(img),
+.world-menu-search-button *:not(img) {
+  position: relative;
+}
+
+.world-menu-search-input input {
+  width: 100%;
+}
+
+.world-menu-search-button {
+  width: 80%;
+  height: 75%;
+  margin-left: 10%;
+}
+
+.world-menu-search-button button {
+  height: 5vh;
+  width: auto;
+  background-color: transparent;
+  color: silver;
+  border: none;
 }
 
 .hidden {
