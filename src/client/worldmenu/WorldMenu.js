@@ -32,47 +32,41 @@ export default function WorldMenu({ worlds, shown, setSelected, mode }) {
                 <div className={`world-menu-explore ${!mode || mode == "explore" ? "" : "hidden"}`}>
                     <div>
                         <div className={`world-menu-worlds ${area != 0 ? "hidden" : ""}`}>
-                            <div className="world-menu-sort">
-                                <div className="world-menu-panel">
-                                    <p>Popular</p>
-                                </div>
-                                <div className="world-menu-panel">
-                                    <p>Unexplored</p>
-                                </div>
-                                <div className="world-menu-panel">
-                                    <p>Developed</p>
-                                </div>
-                                <div className="world-menu-panel">
-                                    <p>Trade</p>
-                                </div>
-                                <div className="world-menu-panel">
-                                    <p>PvP</p>
-                                </div>
+                            <div className="fd">
+                                <select className="world-menu-sort" onChange={(e) => selectFilter(e)}>
+                                    <option>PVP</option>
+                                    <option>Popular</option>
+                                    <option>Unexplored</option>
+                                    <option>Developed</option>
+                                    <option>Trade</option>
+                                </select>
                             </div>
-                            <ul className="world-menu-worldList" id="worldList">
-                                {worlds.map((world, i) => {
-                                    return (
-                                        <li key={i} onClick={() => {
-                                            setSelected(world.name);
-                                            Network.instance.send({
-                                                type: "worldSelect",
-                                                data: {
-                                                    name: world.name
-                                                }
-                                            });
-                                        }}>
-                                            <div className="world-menu-world">
-                                                <div className="world-menu-world-name">
-                                                    <p>{world.name}</p>
+                            <div className="sd">
+                                <ul className="world-menu-worldList" id="worldList">
+                                    {worlds.map((world, i) => {
+                                        return (
+                                            <li key={i} onClick={() => {
+                                                setSelected(world.name);
+                                                Network.instance.send({
+                                                    type: "worldSelect",
+                                                    data: {
+                                                        name: world.name
+                                                    }
+                                                });
+                                            }}>
+                                                <div className="world-menu-world">
+                                                    <div className="world-menu-world-name">
+                                                        <p>{world.name}</p>
+                                                    </div>
+                                                    <div className="world-menu-world-info">
+                                                        <p>{world.players}/{world.maxPlayers}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="world-menu-world-info">
-                                                    <p>{world.players}/{world.maxPlayers}</p>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
                         </div>
                         <div className={`world-menu-personal ${area != 1 ? "hidden" : ""}`}>
 
@@ -117,6 +111,11 @@ export default function WorldMenu({ worlds, shown, setSelected, mode }) {
             </div>
         </div>
     )
+}
+
+export function selectFilter(e) {
+    let filter = e.target.value;
+    console.log(filter);
 }
 
 export function searchWorld() {
