@@ -1,3 +1,5 @@
+import { BlockIndex } from "../Indexes/BlockIndex";
+import { Mapper } from "../Math/Mapper";
 import { Network } from "../Network/Network";
 import { BaseGame } from "../Systems/BaseGame";
 import { EventManager } from "../Systems/EventManager";
@@ -214,21 +216,30 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (base.map && !base.loadedMap) {
-            console.log(`Loading map with ${base.map.tiles.length} tiles`)
-            for (let x = 0; x < base.map.tiles.length; x++) {
-                let block = base.map.tiles[x];
+            console.log(`Loading map with ${base.map.length} tiles`);
+            let blockMap = new Mapper();
+            blockMap = Mapper.from(blockMap, base.map);
+            for (let x = 0; x < blockMap.parts.length; x++) {
+                let block = blockMap.parts[x];
                 if (block) {
-                    if (block.health <= 0)
+                    if (typeof block.health != "undefined" && block.health <= 0)
                         return;
 
-                    block = block.value;
-                    let bl = this.add.sprite(block.x, block.y, block.name).setInteractive();
+                    block = {
+                        x: block.x,
+                        y: block.y,
+                        value: block.value.value
+                    };
+
+                    let blockName = BlockIndex.blocks[block.value];
+                    let bl = this.add.sprite(block.x * 32, block.y * 32, blockName).setInteractive();
                     bl.displayWidth = 32;
                     bl.displayHeight = 32;
 
-                    if (BaseGame.instance.anims[`${block.name}`]) {
-                        bl.play(`${block.name}_anim`, 10, true);
+                    if (BaseGame.instance.anims[`${blockName}`]) {
+                        bl.play(`${blockName}_anim`, 10, true);
                     }
+
                     bl.on("pointerdown", (pointer) => {
                         switch (pointer.button) {
                             // Left
@@ -236,7 +247,7 @@ export class GameScene extends Phaser.Scene {
                                 Network.instance.send({
                                     type: "leftInteract",
                                     data: {
-                                        name: block.name,
+                                        name: blockName,
                                         x: block.x,
                                         y: block.y
                                     }
@@ -249,7 +260,7 @@ export class GameScene extends Phaser.Scene {
                                 Network.instance.send({
                                     type: "rightInteract",
                                     data: {
-                                        name: block.name,
+                                        name: blockName,
                                         x: block.x,
                                         y: block.y
                                     }
@@ -259,11 +270,11 @@ export class GameScene extends Phaser.Scene {
                     });
 
                     bl.setDepth(-1);
-                    if (block.health < 3 && block.health > 0) {
+                    if (typeof block.health != "undefined" && block.health < 3 && block.health > 0) {
                         bl.cr = this.add.sprite(block.x, block.y, `cracked${3 - block.health}`);
                     }
 
-                    if (block.health <= 0) {
+                    if (typeof block.health != "undefined" && block.health <= 0) {
                         bl.destroy();
                     } else {
                         BaseGame.instance.blocks.set(block.x, block.y, bl);
@@ -304,18 +315,18 @@ export class GameScene extends Phaser.Scene {
         }
 
         for (let block of BaseGame.instance.blocks.parts) {
-            block = block.value;
-            let i = this.cameras.main.worldView.contains(block.x, block.y);
-            let l = this.cameras.main.worldView.contains(block.x - 32, block.y);
-            let r = this.cameras.main.worldView.contains(block.x + 32, block.y);
-            let t = this.cameras.main.worldView.contains(block.x, block.y - 32);
-            let b = this.cameras.main.worldView.contains(block.x, block.y + 32);
+            // block = block.value;
+            // let i = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32));
+            // let l = this.cameras.main.worldView.contains((block.x / 32) - 32, (block.y / 32));
+            // let r = this.cameras.main.worldView.contains((block.x / 32) + 32, (block.y / 32));
+            // let t = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32) - 32);
+            // let b = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32) + 32);
 
-            if (i || l || r || t || b) {
-                block.visible = true;
-            } else {
-                block.visible = false;
-            }
+            // if (i || l || r || t || b) {
+            //     block.visible = true;
+            // } else {
+            //     block.visible = false;
+            // }
         }
 
 

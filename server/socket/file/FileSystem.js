@@ -55,4 +55,13 @@ export class FileSystem {
         FileSystem.createFile(path);
         fs.writeFileSync(path, data);
     }
+
+    static readdir(path) {
+        if (!FileSystem.exists(path)) {
+            fs.mkdirSync(path);
+            return fs.readdirSync(path);
+        } else {
+            return fs.readdirSync(path);
+        }
+    }
 }

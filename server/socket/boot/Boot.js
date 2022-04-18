@@ -1,3 +1,4 @@
+import { Mapper } from "../math/Mapper";
 import { Singleton } from "../systems/Singleton";
 
 export class Boot extends Singleton {
@@ -7,10 +8,10 @@ export class Boot extends Singleton {
         server.send(user.socket, {
             type: "worldMenu",
             data: {
-                worlds: zones.map(zone => ({ name: zone.name, players: zone.players.length, maxPlayers: 50}))
+                worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
             }
         });
-        
+
         // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
         // server.send(user.socket, {
         //     type: "worldMenu",
@@ -20,16 +21,63 @@ export class Boot extends Singleton {
         // });
     }
 
+    handleWorldCreate(server, socket, name) {
+        let zone = server.zoneManager.zones.find(world => world.name == name);
+        if (!zone) {
+            let zone = server.zoneManager.generateZone(name, 50, 80);
+            this.handleWorldSelect(server, socket, name);
+        } else {
+            server.send(socket, {
+                type: "worldCreateStatus",
+                data: {
+                    success: false
+                }
+            });
+        }
+    }
+
     handleWorldSelect(server, socket, name) {
-        let world = server.worlds.find(world => world.name == name);
+        let world = server.zoneManager.zones.find(world => world.name == name);
         if (world) {
-            let user = server.users.find(user => user.socket == socket);
+            if (!world.players)
+                world.players = [];
+
+            let user = world.players.find(user => user.socket == socket);
+            if (!user) {
+                let usey = server.users.find(user => user.socket == socket);
+                if (usey) {
+                    user = { ...usey };
+                    world.players.push(user);
+                }
+            }
+
             user.world = name;
 
-            let x = server.map.spawnTile.x;
-            let y = server.map.spawnTile.y;
+            if (!world.spawnPoint)
+                for (let i = 0; i < world.blocks.asData().length; i++) {
+                    let block = world.blocks.asData()[i];
+                    if (block && block.value == 1) {
+                        console.log("Found spawn point");
+                        world.spawnPoint = { x: block.x * 32, y: block.y * 32 };
+                        break;
+                    }
+                }
 
-            world.players.push({ name: user.name, x, y });
+            if (!world.spawnPoint)
+                for (let i = 0; i < world.blocks.asData().length; i++) {
+                    let block = world.blocks.asData()[i];
+                    if (block && block.value == 2) {
+                        console.log("Found spawn point");
+                        world.spawnPoint = { x: block.x * 32, y: block.y * 32 - 32 };
+                        break;
+                    }
+                }
+
+            let x = world.spawnPoint ? world.spawnPoint.x : 0;
+            let y = world.spawnPoint ? world.spawnPoint.y : 0;
+
+            user.x = x;
+            user.y = y;
 
             server.send(user.socket, {
                 type: "selfJoin",
@@ -40,7 +88,7 @@ export class Boot extends Singleton {
                 }
             });
 
-            for (let player of server.users) {
+            for (let player of world.players) {
                 if (world.players.find(p => p.name == player.name)) {
                     server.send(user.socket, {
                         type: "playerJoin",
@@ -62,10 +110,16 @@ export class Boot extends Singleton {
                 }
             }, name);
 
+            let w = world;
+            let bb = w.blocks.asData();
+            for (let b of bb) {
+                delete b.zone;
+            }
+
             server.send(user.socket, {
                 type: "loadMap",
                 data: {
-                    map: server.map.inst
+                    map: bb
                 }
             });
         }
@@ -83,7 +137,7 @@ export class Boot extends Singleton {
     //         }
     //     });
 
-    //     for (let player of server.users) {
+    //     for (let player of world.players) {
     //         server.send(user.socket, {
     //             type: "playerJoin",
     //             data: {

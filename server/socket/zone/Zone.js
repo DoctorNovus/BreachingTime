@@ -37,7 +37,15 @@ export class Zone {
             height: this.height,
             name: this.name,
             spawnPoint: this.spawnPoint || { x: 0, y: 0 },
-            blocks: this.blocks.asData()
+            blocks: this.blocks.asData(true)
         }
+    }
+
+    static fromData(data){
+        let zone = new Zone(data.width, data.height, data.name);
+        zone.spawnPoint = data.spawnPoint;
+        zone.blocks = Mapper.from(zone.blocks, data.blocks);
+
+        return zone;
     }
 }

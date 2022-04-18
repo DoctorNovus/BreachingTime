@@ -130,6 +130,7 @@ export function startGame(setStarted, username, setWorlds) {
     };
 
     MainGame.instance.onWorldMenu = (data) => {
+        console.log(data);
         let { worlds } = data;
         setWorlds(worlds);
     };

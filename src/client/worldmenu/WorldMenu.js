@@ -72,7 +72,7 @@ export default function WorldMenu({ worlds, shown, setSelected, mode }) {
 
                         </div>
                         <div className={`world-menu-search ${area != 2 ? "hidden" : ""}`}>
-                            <form onSubmit={(e) => { e.preventDefault(); searchWorld() }}>
+                            <form onSubmit={(e) => { e.preventDefault(); searchWorld(worlds, setSelected) }}>
                                 <div className="world-menu-search-input">
                                     <input name="search" id="searchWorld" type="text" placeholder="World Name..." />
                                 </div>
@@ -118,7 +118,25 @@ export function selectFilter(e) {
     console.log(filter);
 }
 
-export function searchWorld() {
+export function searchWorld(worlds, setSelected) {
     let world = document.getElementById("searchWorld").value;
-    console.log(world);
+    let selected = worlds.find(w => w.name == world);
+    if (selected) {
+        setSelected(selected.name);
+        Network.instance.send({
+            type: "worldSelect",
+            data: {
+                name: selected.name
+            }
+        });
+    } else {
+        setSelected(world);
+        Network.instance.send({
+            type: "worldCreate",
+            data: {
+                name: world
+            }
+        });
+    }
+    
 }

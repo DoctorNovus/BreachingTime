@@ -1,4 +1,5 @@
 import { MainGame } from "..";
+import { Zone } from "../../../server/socket/zone/Zone";
 import { Player } from "../Entities/Player";
 import { BaseGame } from "../Systems/BaseGame";
 import { Singleton } from "../Systems/Singleton";
@@ -112,7 +113,7 @@ export class Network extends Singleton {
                 case "worldMenu":
                     MainGame.instance.onWorldMenu(data);
                     break;
-                    
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;
@@ -129,6 +130,31 @@ export class Network extends Singleton {
     }
 
     send(data) {
-        this.socket.send(JSON.stringify(data));
+        if (data.asData) {
+            if (data instanceof Zone) {
+                let zData = data.asData();
+                let zDataBlocks = [];
+
+                if (zData && zData.blocks[0].value.zone)
+                    zData.blocks.forEach((block) => {
+                        let b = block.value;
+                        zDataBlocks.push({
+                            x: b.x,
+                            y: b.y,
+                            width: b.width,
+                            height: b.height,
+                            value: b.value
+                        });
+                    });
+
+                zData.blocks = zDataBlocks;
+                this.socket.send(JSON.stringify(zData));
+            } else {
+                this.socket.send(JSON.stringify(data));
+            }
+        } else {
+            this.socket.send(JSON.stringify(data));
+
+        }
     }
 }

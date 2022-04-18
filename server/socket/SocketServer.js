@@ -20,11 +20,10 @@ export class SocketServer extends Singleton {
             await Database.instance.connect();
 
         this.users = [];
-        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30 }, { name: "HiroWorld2", players: [], maxPlayers: 30 }];
-
         this.movement = new Movement(this);
         this.zoneManager = new ZoneManager();
-        
+        this.zoneManager.loadZones();
+
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
 
         this.wss.on("connection", (socket) => {
@@ -64,12 +63,13 @@ export class SocketServer extends Singleton {
                         break;
 
                     case "move":
-                        this.movement.movePlayer(this, socket, this.users, data);
+                        this.movement.movePlayer(this, socket, data);
                         break;
 
                     case "leftInteract":
-                        user = this.users.find(user => user.socket == socket);
-                        let world = this.worlds.find(world => world.name == user.world);
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        let world = this.zoneManager.zones.find(world => world.name == user.world);
+                        console.log(world);
                         console.log(data);
                         // if(!world.map)
                         //     world.map = new Map(50, 50);
@@ -99,7 +99,7 @@ export class SocketServer extends Singleton {
                         break;
 
                     case "chat":
-                        user = this.users.find(user => user.socket == socket);
+                        user = this.zoneManager.getPlayerBySocket(socket);
                         this.sendToAll({
                             type: "chat",
                             data: {
@@ -114,6 +114,11 @@ export class SocketServer extends Singleton {
                         Boot.instance.handleWorldSelect(this, socket, name);
                         break;
 
+                    case "worldCreate":
+                        let { name: createName } = data;
+                        Boot.instance.handleWorldCreate(this, socket, createName);
+                        break;
+
                     default:
                         console.log("Unknown message type: " + type);
                         break;
@@ -121,15 +126,14 @@ export class SocketServer extends Singleton {
             });
 
             socket.on("close", () => {
-                let user = this.users.find(user => user.socket == socket);
+                let user = this.zoneManager.getPlayerBySocket(socket);
                 if (user) {
                     if (user.world) {
-                        let world = this.worlds.find(world => world.name == user.world);
+                        let world = this.zoneManager.zones.find(world => world.name == user.world);
                         if (world)
                             world.players.splice(world.players.indexOf(user.name), 1);
                     }
 
-                    this.users.splice(this.users.indexOf(user), 1);
                     this.sendToAll({
                         type: "playerLeave",
                         data: {
@@ -142,37 +146,67 @@ export class SocketServer extends Singleton {
     }
 
     send(socket, data) {
-        socket.send(JSON.stringify(data));
+        if (data.asData) {
+            if (data instanceof Zone) {
+                let zData = data.asData();
+                let zDataBlocks = [];
+
+                if (zData && zData.blocks[0].value.zone)
+                    zData.blocks.forEach((block) => {
+                        let b = block.value;
+                        zDataBlocks.push({
+                            x: b.x,
+                            y: b.y,
+                            width: b.width,
+                            height: b.height,
+                            value: b.value
+                        });
+                    });
+
+                zData.blocks = zDataBlocks;
+                socket.send(JSON.stringify(zData));
+            } else {
+                socket.send(JSON.stringify(data));
+            }
+        } else {
+            socket.send(JSON.stringify(data));
+        }
     }
 
     sendTo(user, data, world) {
-        for (let player of this.users) {
-            if (player.name == user) {
-                if (world && player.world == world)
-                    this.send(player.socket, data);
-                else if (!world)
-                    this.send(player.socket, data);
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
+                if (player.name == user) {
+                    if (world && player.world == world)
+                        this.send(player.socket, data);
+                    else if (!world)
+                        this.send(player.socket, data);
+                }
             }
-        }
     }
 
     sendToAll(data, world) {
-        for (let player of this.users) {
-            if (world && player.world == world)
-                this.send(player.socket, data);
-            else if (!world)
-                this.send(player.socket, data);
-
-        }
-    }
-
-    sendToAllExcept(user, data, world) {
-        for (let player of this.users) {
-            if (player.name != user.name)
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
                 if (world && player.world == world)
                     this.send(player.socket, data);
                 else if (!world)
                     this.send(player.socket, data);
-        }
+
+            }
+    }
+
+    sendToAllExcept(user, data, world) {
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
+                if (player.name != user.name)
+                    if (world && player.world == world)
+                        this.send(player.socket, data);
+                    else if (!world)
+                        this.send(player.socket, data);
+            }
     }
 }

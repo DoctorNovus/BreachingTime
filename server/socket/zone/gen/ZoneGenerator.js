@@ -7,7 +7,10 @@ export class ZoneGenerator {
     constructor() {
     }
 
-    generate(name = "test", width = 100, height = 60, seed) {
+    generate(name, width = 100, height = 60, seed) {
+        if(!name)
+            name = "test";
+            
         if (!seed)
             seed = this.generateSeed();
 
@@ -95,7 +98,7 @@ export class ZoneGenerator {
                     if (j == yCoord.top - 1 && zone.getBlockofValue(1) == null) {
                         let portal = new Block(zone, i, j, 32, 32, 1);
                         zone.addBlock(i, j, portal);
-                        zone.spawnPoint = { x: i, y: j };
+                        zone.spawnPoint = { x: i * 32, y: j * 32 };
                     }
                 }
 

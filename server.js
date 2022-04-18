@@ -167,321 +167,6 @@ class Server {
     }
 }
 
-class Boot extends Singleton {
-
-    login(server, user) {
-        let zones = server.zoneManager.zones;
-        server.send(user.socket, {
-            type: "worldMenu",
-            data: {
-                worlds: zones.map(zone => ({ name: zone.name, players: zone.players.length, maxPlayers: 50}))
-            }
-        });
-        
-        // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
-        // server.send(user.socket, {
-        //     type: "worldMenu",
-        //     data: {
-        //         worlds
-        //     }
-        // });
-    }
-
-    handleWorldSelect(server, socket, name) {
-        let world = server.worlds.find(world => world.name == name);
-        if (world) {
-            let user = server.users.find(user => user.socket == socket);
-            user.world = name;
-
-            let x = server.map.spawnTile.x;
-            let y = server.map.spawnTile.y;
-
-            world.players.push({ name: user.name, x, y });
-
-            server.send(user.socket, {
-                type: "selfJoin",
-                data: {
-                    name: user.name,
-                    x,
-                    y
-                }
-            });
-
-            for (let player of server.users) {
-                if (world.players.find(p => p.name == player.name)) {
-                    server.send(user.socket, {
-                        type: "playerJoin",
-                        data: {
-                            name: player.name,
-                            x: player.x,
-                            y: player.y
-                        }
-                    });
-                }
-            }
-
-            server.sendToAllExcept(user, {
-                type: "playerJoin",
-                data: {
-                    name: user.name,
-                    x: user.x,
-                    y: user.y
-                }
-            }, name);
-
-            server.send(user.socket, {
-                type: "loadMap",
-                data: {
-                    map: server.map.inst
-                }
-            });
-        }
-    }
-
-    // login(server, user) {
-    //     console.log(`${user.name} logged in`);
-
-    //     server.send(user.socket, {
-    //         type: "selfJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     for (let player of server.users) {
-    //         server.send(user.socket, {
-    //             type: "playerJoin",
-    //             data: {
-    //                 name: player.name,
-    //                 x: player.x,
-    //                 y: player.y
-    //             }
-    //         });
-    //     }
-
-    //     server.sendToAllExcept(user, {
-    //         type: "playerJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     server.send(user.socket, {
-    //         type: "loadMap",
-    //         data: {
-    //             map: server.map.inst
-    //         }
-    //     });
-    // }
-}
-
-class Movement {
-    constructor() {
-        this.queue = [];
-    }
-
-    checkCollision(rect, zone) {
-        let collides = false;
-
-        for (let tile of map._tiles.parts) {
-            tile = tile.value;
-            if (tile.layer == ("foreground") && tile.health > 0) {
-                if (rect.overlaps(tile.rect)) {
-                    collides = true;
-                }
-            }
-        }
-
-        if(rect.x < 0 || rect.x > (map.width * 32) - 32 || rect.y < (-1 * map.height * 32) || rect.y > map.height * 32)
-            collides = true;
-
-        return collides;
-    }
-
-    runMovementQueue(net) {
-        // for (let que of this.queue) {
-        //     if (!que) return;
-
-        //     if (que.x == 0 && que.y == 0) {
-        //         this.queue.splice(this.queue.indexOf(que), 1);
-        //         return;
-        //     }
-
-        //     if (que.x > 0)
-        //         que.x = 1;
-        //     else if (que.x < 0)
-        //         que.x = -1;
-
-        //     if (que.y > 0)
-        //         que.y = 1;
-        //     else if (que.y < 0)
-        //         que.y = -1;
-
-        //     let user = net.users.find(user => user.name == que.name);
-        //     if (user) {
-        //         let rect = user.rect;
-        //         if (!rect) {
-        //             rect = new Rectangle(user.x, user.y, user.width, user.height);
-        //             user.rect = rect;
-        //         }
-
-        //         let speed = 2;
-
-        //         if (user.speed)
-        //             speed = user.speed;
-
-        //         rect.x += que.x * speed;
-        //         rect.y += que.y * speed;
-
-        //         if (this.checkCollision(rect, net.map)) {
-        //             rect.setPosition(user.x, user.y);
-        //             return;
-        //         }
-
-        //         user.x += que.x * speed;
-        //         user.y += que.y * speed;
-
-        //         let direction = "idle";
-        //         if (que.x == 0 && que.y == 0)
-        //             direction = "idle";
-        //         else {
-        //             if (que.y == 0)
-        //                 if (que.x > 0)
-        //                     direction = "right";
-        //                 else
-        //                     direction = "left";
-        //             else
-        //                 if(que.y > 0)
-        //                     direction = "down";
-        //                 else
-        //                     direction = "up";
-        //         }
-
-        //         net.sendToAll({
-        //             type: "move",
-        //             data: {
-        //                 name: user.name,
-        //                 x: user.x,
-        //                 y: user.y,
-        //                 direction
-        //             }
-        //         }, user.world);
-        //     }
-        // }
-
-        // for (let user of net.users) {
-        //     let que = this.queue.find(que => que && que.name == user.name);
-        //     if ((!que) || (que && que.y == 0)) {
-        //         if (!user.rect)
-        //             user.rect = new Rectangle(user.x, user.y, user.width, user.height);
-
-        //         let rect = user.rect;
-
-        //         if (!rect.width || !rect.height) {
-        //             rect.width = 30;
-        //             rect.height = 30;
-        //         }
-
-        //         rect.setPosition(user.x, user.y + 1);
-
-        //         if (this.checkCollision(rect, net.map)) {
-        //             rect.setPosition(user.x, user.y);
-        //             if(!user.grounded){
-        //                 net.sendToAll({
-        //                     type: "move",
-        //                     data: {
-        //                         name: user.name,
-        //                         x: user.x,
-        //                         y: user.y,
-        //                         direction: "idle"
-        //                     }
-        //                 }, user.world);
-
-        //                 user.grounded = true;
-        //             }
-        //             return;
-        //         } else {
-        //             user.grounded = false;
-        //             user.y = rect.y;
-
-        //             net.sendToAll({
-        //                 type: "move",
-        //                 data: {
-        //                     name: user.name,
-        //                     x: user.x,
-        //                     y: user.y,
-        //                     direction: "down"
-        //                 }
-        //             }, user.world);
-        //         }
-        //     }
-        // }
-    }
-
-    movePlayer(net, socket, users, data) {
-        let user = users.find(user => user.socket == socket);
-
-        if (data.x == 0 && data.y == 0) {
-            let que = this.queue.filter(que => que && que.name == user.name);
-            for (let q of que) {
-                this.queue.splice(this.queue.indexOf(q), 1);
-            }
-
-            net.sendToAll({
-                type: "move",
-                data: {
-                    name: user.name,
-                    x: user.x,
-                    y: user.y,
-                    direction: "idle"
-                }
-            }, user.world);
-        } else {
-            let queu = {
-                name: user.name,
-                x: data.x,
-                y: data.y
-            };
-
-            if (!this.queue.find(que => que && que.name == user.name)) {
-                this.queue.push(queu);
-            } else {
-                let que = this.queue.find(que => que && que.name == user.name);
-                if (que.y == 0 && data.y > 0)
-                    que.y = data.y;
-
-                if (que.x == 0 && data.x > 0)
-                    que.x = data.x;
-            }
-        }
-    }
-}
-
-class Block {
-    constructor(zone, x, y, width, height, value) {
-        this.zone = zone;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.value = value;
-    }
-
-    asData() {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-            value: this.value
-        };
-    }
-}
-
 class Mapper {
     width = 0;
     height = 0;
@@ -552,8 +237,14 @@ class Mapper {
         return part;
     }
 
-    asData(){
-        let data = this.parts.map(part => part.value.asData ? part.value.asData() : part.value);
+    asData(toggle){
+        let parse = (part) => {
+            if(!toggle)
+                return part.value;
+            else
+                return part;
+        };
+        let data = this.parts.map(part => parse(part).asData ? parse(part).asData() : parse(part));
         return data;
     }
 
@@ -565,8 +256,6 @@ class Mapper {
             let part = parts[i];
             let x = part.x;
             let y = part.y;
-            delete part.x;
-            delete part.y;
 
             if(w < x)
                 w = x;
@@ -583,7 +272,531 @@ class Mapper {
     }
 }
 
-class Zone {
+class Boot extends Singleton {
+
+    login(server, user) {
+        let zones = server.zoneManager.zones;
+        server.send(user.socket, {
+            type: "worldMenu",
+            data: {
+                worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
+            }
+        });
+
+        // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
+        // server.send(user.socket, {
+        //     type: "worldMenu",
+        //     data: {
+        //         worlds
+        //     }
+        // });
+    }
+
+    handleWorldCreate(server, socket, name) {
+        let zone = server.zoneManager.zones.find(world => world.name == name);
+        if (!zone) {
+            server.zoneManager.generateZone(name, 50, 80);
+            this.handleWorldSelect(server, socket, name);
+        } else {
+            server.send(socket, {
+                type: "worldCreateStatus",
+                data: {
+                    success: false
+                }
+            });
+        }
+    }
+
+    handleWorldSelect(server, socket, name) {
+        let world = server.zoneManager.zones.find(world => world.name == name);
+        if (world) {
+            if (!world.players)
+                world.players = [];
+
+            let user = world.players.find(user => user.socket == socket);
+            if (!user) {
+                let usey = server.users.find(user => user.socket == socket);
+                if (usey) {
+                    user = { ...usey };
+                    world.players.push(user);
+                }
+            }
+
+            user.world = name;
+
+            if (!world.spawnPoint)
+                for (let i = 0; i < world.blocks.asData().length; i++) {
+                    let block = world.blocks.asData()[i];
+                    if (block && block.value == 1) {
+                        console.log("Found spawn point");
+                        world.spawnPoint = { x: block.x * 32, y: block.y * 32 };
+                        break;
+                    }
+                }
+
+            if (!world.spawnPoint)
+                for (let i = 0; i < world.blocks.asData().length; i++) {
+                    let block = world.blocks.asData()[i];
+                    if (block && block.value == 2) {
+                        console.log("Found spawn point");
+                        world.spawnPoint = { x: block.x * 32, y: block.y * 32 - 32 };
+                        break;
+                    }
+                }
+
+            let x = world.spawnPoint ? world.spawnPoint.x : 0;
+            let y = world.spawnPoint ? world.spawnPoint.y : 0;
+
+            user.x = x;
+            user.y = y;
+
+            server.send(user.socket, {
+                type: "selfJoin",
+                data: {
+                    name: user.name,
+                    x,
+                    y
+                }
+            });
+
+            for (let player of world.players) {
+                if (world.players.find(p => p.name == player.name)) {
+                    server.send(user.socket, {
+                        type: "playerJoin",
+                        data: {
+                            name: player.name,
+                            x: player.x,
+                            y: player.y
+                        }
+                    });
+                }
+            }
+
+            server.sendToAllExcept(user, {
+                type: "playerJoin",
+                data: {
+                    name: user.name,
+                    x: user.x,
+                    y: user.y
+                }
+            }, name);
+
+            let w = world;
+            let bb = w.blocks.asData();
+            for (let b of bb) {
+                delete b.zone;
+            }
+
+            server.send(user.socket, {
+                type: "loadMap",
+                data: {
+                    map: bb
+                }
+            });
+        }
+    }
+
+    // login(server, user) {
+    //     console.log(`${user.name} logged in`);
+
+    //     server.send(user.socket, {
+    //         type: "selfJoin",
+    //         data: {
+    //             name: user.name,
+    //             x: user.x,
+    //             y: user.y
+    //         }
+    //     });
+
+    //     for (let player of world.players) {
+    //         server.send(user.socket, {
+    //             type: "playerJoin",
+    //             data: {
+    //                 name: player.name,
+    //                 x: player.x,
+    //                 y: player.y
+    //             }
+    //         });
+    //     }
+
+    //     server.sendToAllExcept(user, {
+    //         type: "playerJoin",
+    //         data: {
+    //             name: user.name,
+    //             x: user.x,
+    //             y: user.y
+    //         }
+    //     });
+
+    //     server.send(user.socket, {
+    //         type: "loadMap",
+    //         data: {
+    //             map: server.map.inst
+    //         }
+    //     });
+    // }
+}
+
+class Rectangle {
+
+    /**
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     */
+    constructor(x, y, width, height) {
+        /** x location of the rectangle */
+        this.x = x;
+        /** y location of the rectangle */
+        this.y = y;
+        /** width of the rectangle */
+        this.width = width;
+        /** height of the rectangle */
+        this.height = height;
+        /** right side of the rectangle */
+        this.right = this.x + this.width;
+        /** bottom side of the rectangle */
+        this.bottom = this.y + this.height;
+    }
+
+    /**
+     * check if the rectangle overlaps another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} are the rectangles overlapping
+     */
+    overlaps(rectangle) {
+        return (this.x < rectangle.x + rectangle.width &&
+            this.x + this.width > rectangle.x &&
+            this.y < rectangle.y + rectangle.height &&
+            this.y + this.height > rectangle.y);
+    }
+
+    /**
+     * check if the rectangle is inside another rectangle
+     * @param {Rectangle} rectangle rectangle to compare with
+     * @return {boolean} is the rectangle inside the other rectangle
+     */
+    within(rectangle) {
+        return (rectangle.x <= this.x &&
+            rectangle.right >= this.right &&
+            rectangle.y <= this.y &&
+            rectangle.bottom >= this.bottom);
+    }
+
+    /**
+     * check if the coordinates are inside this rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     * @return {boolean} does the rectangle contain the coordinates
+     */
+    contains(x, y) {
+        return (x >= this.x &&
+            x <= this.right &&
+            y >= this.y &&
+            y <= this.bottom);
+    }
+
+    /**
+     * set the position of the rectangle
+     * @param {number} x x coordinate
+     * @param {number} y y coordinate
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * set the size of the rectangle
+     * @param {number} width new rectangle width
+     * @param {number} height new rectangle height
+     */
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
+class Movement {
+    constructor() {
+        this.queue = [];
+    }
+
+    checkCollision(rect, zone) {
+        let collides = false;
+        if (!zone)
+            return;
+
+        let blocks = zone.blocks;
+        let bb = blocks.parts || blocks;
+
+        for (let tile of bb) {
+            let tRect = new Rectangle(tile.x * 32, tile.y * 32, tile.value.width, tile.value.height);
+            if(tile.value.value == (1))
+                tile.layer = "background";
+
+            if (tile.layer) {
+                if (tile.layer == ("foreground")) {
+                    if (rect.overlaps(tRect)) {
+                        collides = true;
+                    }
+                }
+            } else {
+                if (rect.overlaps(tRect))
+                    collides = true;
+            }
+        }
+
+        if (rect.x < 0 || rect.x > (zone.width * 32) - 32 || rect.y < (-1 * zone.height * 32) || rect.y > zone.height * 32)
+            collides = true;
+
+        return collides;
+    }
+
+    runMovementQueue(net) {
+        for (let que of this.queue) {
+            if (!que) return;
+
+            if (que.x == 0 && que.y == 0) {
+                this.queue.splice(this.queue.indexOf(que), 1);
+                return;
+            }
+
+            if (que.x > 0)
+                que.x = 1;
+            else if (que.x < 0)
+                que.x = -1;
+
+            if (que.y > 0)
+                que.y = 1;
+            else if (que.y < 0)
+                que.y = -1;
+
+            let user = net.zoneManager.getPlayer(que.name);
+            if (user) {
+                let rect = user.rect;
+                if (!rect) {
+                    rect = new Rectangle(user.x, user.y, user.width, user.height);
+                    user.rect = rect;
+                }
+
+                let speed = 2;
+
+                if (user.speed)
+                    speed = user.speed;
+
+                rect.x += que.x * speed;
+                rect.y += que.y * speed;
+
+                let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                if (this.checkCollision(rect, zone)) {
+                    rect.setPosition(user.x, user.y);
+                    return;
+                }
+
+                user.x += que.x * speed;
+                user.y += que.y * speed;
+
+                let direction = "idle";
+                if (que.x == 0 && que.y == 0)
+                    direction = "idle";
+                else {
+                    if (que.y == 0)
+                        if (que.x > 0)
+                            direction = "right";
+                        else
+                            direction = "left";
+                    else
+                        if (que.y > 0)
+                            direction = "down";
+                        else
+                            direction = "up";
+                }
+
+                net.sendToAll({
+                    type: "move",
+                    data: {
+                        name: user.name,
+                        x: user.x,
+                        y: user.y,
+                        direction
+                    }
+                }, user.world);
+            }
+        }
+
+        for (let zone of net.zoneManager.zones) {
+            if (zone.players && zone.players.length > 0)
+                for (let user of zone.players) {
+                    let que = this.queue.find(que => que && que.name == user.name);
+                    if ((!que) || (que && que.y == 0)) {
+                        if (!user.rect)
+                            user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+
+                        let rect = user.rect;
+
+                        if (!rect.width || !rect.height) {
+                            rect.width = 30;
+                            rect.height = 30;
+                        }
+
+                        rect.setPosition(user.x, user.y + 1);
+
+                        let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                        if (this.checkCollision(rect, zone)) {
+                            rect.setPosition(user.x, user.y);
+                            if (!user.grounded) {
+                                net.sendToAll({
+                                    type: "move",
+                                    data: {
+                                        name: user.name,
+                                        x: user.x,
+                                        y: user.y,
+                                        direction: "idle"
+                                    }
+                                }, user.world);
+
+                                user.grounded = true;
+                            }
+                            return;
+                        } else {
+                            user.grounded = false;
+                            user.y = rect.y;
+
+                            net.sendToAll({
+                                type: "move",
+                                data: {
+                                    name: user.name,
+                                    x: user.x,
+                                    y: user.y,
+                                    direction: "down"
+                                }
+                            }, user.world);
+                        }
+                    }
+                }
+        }
+
+        for (let quete of this.queue) {
+            if (!quete)
+                return;
+
+            let user = net.zoneManager.getPlayer(quete.name);
+            let que = this.queue.find(que => que && que.name == user.name);
+
+            if ((!que) || (que && que.y == 0)) {
+                if (!user.rect)
+                    user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+
+                let rect = user.rect;
+
+                if (!rect.width || !rect.height) {
+                    rect.width = 30;
+                    rect.height = 30;
+                }
+
+                rect.setPosition(user.x, user.y + 1);
+
+                let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                if (this.checkCollision(rect, zone)) {
+                    rect.setPosition(user.x, user.y);
+                    if (!user.grounded) {
+                        net.sendToAll({
+                            type: "move",
+                            data: {
+                                name: user.name,
+                                x: user.x,
+                                y: user.y,
+                                direction: "idle"
+                            }
+                        }, user.world);
+
+                        user.grounded = true;
+                    }
+                    return;
+                } else {
+                    user.grounded = false;
+                    user.y = rect.y;
+
+                    net.sendToAll({
+                        type: "move",
+                        data: {
+                            name: user.name,
+                            x: user.x,
+                            y: user.y,
+                            direction: "down"
+                        }
+                    }, user.world);
+                }
+            }
+        }
+    }
+
+    movePlayer(net, socket, data) {
+        let user = net.zoneManager.getPlayerBySocket(socket);
+
+        if (!user)
+            return;
+
+        if (data.x == 0 && data.y == 0) {
+            let que = this.queue.filter(que => que && que.name == user.name);
+            for (let q of que) {
+                this.queue.splice(this.queue.indexOf(q), 1);
+            }
+
+            net.sendToAll({
+                type: "move",
+                data: {
+                    name: user.name,
+                    x: user.x,
+                    y: user.y,
+                    direction: "idle"
+                }
+            }, user.world);
+        } else {
+            let queu = {
+                name: user.name,
+                x: data.x,
+                y: data.y
+            };
+
+            if (!this.queue.find(que => que && que.name == user.name)) {
+                this.queue.push(queu);
+            } else {
+                let que = this.queue.find(que => que && que.name == user.name);
+                if (que.y == 0 && data.y > 0)
+                    que.y = data.y;
+
+                if (que.x == 0 && data.x > 0)
+                    que.x = data.x;
+            }
+        }
+    }
+}
+
+class Block {
+    constructor(zone, x, y, width, height, value) {
+        this.zone = zone;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.value = value;
+    }
+
+    asData() {
+        return {
+            x: this.x,
+            y: this.y,
+            width: this.width,
+            height: this.height,
+            value: this.value
+        };
+    }
+}
+
+class Zone$1 {
 
     constructor(width, height, name) {
         this.width = width;
@@ -620,8 +833,16 @@ class Zone {
             height: this.height,
             name: this.name,
             spawnPoint: this.spawnPoint || { x: 0, y: 0 },
-            blocks: this.blocks.asData()
+            blocks: this.blocks.asData(true)
         }
+    }
+
+    static fromData(data){
+        let zone = new Zone$1(data.width, data.height, data.name);
+        zone.spawnPoint = data.spawnPoint;
+        zone.blocks = Mapper.from(zone.blocks, data.blocks);
+
+        return zone;
     }
 }
 
@@ -630,7 +851,10 @@ class ZoneGenerator {
     constructor() {
     }
 
-    generate(name = "test", width = 100, height = 60, seed) {
+    generate(name, width = 100, height = 60, seed) {
+        if(!name)
+            name = "test";
+            
         if (!seed)
             seed = this.generateSeed();
 
@@ -639,7 +863,7 @@ class ZoneGenerator {
 
         let simplex = new SimplexNoise__default["default"](seed);
 
-        let zone = new Zone(width, height, name);
+        let zone = new Zone$1(width, height, name);
 
         // else if (j == 40) {
         //     if (i == xPos && zone.getBlockofValue(1) == null) {
@@ -706,7 +930,7 @@ class ZoneGenerator {
                     if (j == yCoord.top - 1 && zone.getBlockofValue(1) == null) {
                         let portal = new Block(zone, i, j, 32, 32, 1);
                         zone.addBlock(i, j, portal);
-                        zone.spawnPoint = { x: i, y: j };
+                        zone.spawnPoint = { x: i * 32, y: j * 32 };
                     }
                 }
 
@@ -886,11 +1110,20 @@ class FileSystem {
         FileSystem.createFile(path);
         fs__default["default"].writeFileSync(path, data);
     }
+
+    static readdir(path) {
+        if (!FileSystem.exists(path)) {
+            fs__default["default"].mkdirSync(path);
+            return fs__default["default"].readdirSync(path);
+        } else {
+            return fs__default["default"].readdirSync(path);
+        }
+    }
 }
 
 class ZoneManager {
 
-    constructor(){
+    constructor() {
         this.zones = [];
         this.generators = {
             "default": new ZoneGenerator(),
@@ -898,38 +1131,96 @@ class ZoneManager {
         };
     }
 
-    generateZone(name, width, height, type, seed){
+    generateZone(name, width, height, type = "default", seed) {
         let zone = this.generators[type].generate(name, width, height, seed);
         this.addZone(zone);
         this.saveZone(zone);
     }
 
-    generateRandomZone(name, width, height, seed){
+    generateRandomZone(name, width, height, seed) {
         let zone = this.generators[Object.keys(this.generators)[Math.floor(Math.random() * Object.keys(this.generators).length)]].generate(name, width, height, seed);
         this.addZone(zone);
         this.saveZone(zone);
     }
 
-    addZone(zone){
+    addZone(zone) {
         this.zones.push(zone);
     }
 
-    getZone(name){
+    getZone(name) {
         return this.zones.find(zone => zone.name == name);
     }
 
-    deleteZone(zone){
+    deleteZone(zone) {
         this.zones.splice(this.zones.indexOf(zone), 1);
     }
 
-    saveZones(){
-        for(let zone of this.zones){
+    saveZones() {
+        for (let zone of this.zones) {
             this.saveZone(zone);
         }
     }
 
-    saveZone(zone){
-        FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zone.asData()));
+    saveZone(zone) {
+        let zData = zone.asData();
+        let zDataBlocks = [];
+
+        if (zData && zData.blocks[0].value.zone)
+            zData.blocks.forEach((block) => {
+                let b = block.value;
+                zDataBlocks.push({
+                    x: b.x,
+                    y: b.y,
+                    width: b.width,
+                    height: b.height,
+                    value: b.value
+                });
+            });
+
+        zData.blocks = zDataBlocks;
+
+        FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zData));
+    }
+
+    loadZones() {
+        let files = FileSystem.readdir(`${__dirname}/zones`);
+        if (!files) {
+            console.log("No zones found");
+            return;
+        }
+
+        for (let file of files) {
+            let f = FileSystem.readFile(`${__dirname}/zones/${file}/config.json`);
+            this.loadZone(f);
+        }
+    }
+
+    loadZone(data) {
+        data = JSON.parse(data);
+        let zone = Zone$1.fromData(data);
+        this.addZone(zone);
+    }
+
+    getPlayer(name) {
+        for (let zone of this.zones) {
+            if (zone.players && zone.players.length > 0)
+                for (let player of zone.players) {
+                    if (player.name == name) {
+                        return player;
+                    }
+                }
+        }
+    }
+
+    getPlayerBySocket(socket) {
+        for (let zone of this.zones) {
+            if (zone.players && zone.players.length > 0)
+                for (let player of zone.players) {
+                    if (player.socket == socket) {
+                        return player;
+                    }
+                }
+        }
     }
 }
 
@@ -948,11 +1239,10 @@ class SocketServer extends Singleton {
             await Database.instance.connect();
 
         this.users = [];
-        this.worlds = [{ name: "HiroWorld", players: [], maxPlayers: 30 }, { name: "HiroWorld2", players: [], maxPlayers: 30 }];
-
         this.movement = new Movement(this);
         this.zoneManager = new ZoneManager();
-        
+        this.zoneManager.loadZones();
+
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
 
         this.wss.on("connection", (socket) => {
@@ -992,12 +1282,13 @@ class SocketServer extends Singleton {
                         break;
 
                     case "move":
-                        this.movement.movePlayer(this, socket, this.users, data);
+                        this.movement.movePlayer(this, socket, data);
                         break;
 
                     case "leftInteract":
-                        user = this.users.find(user => user.socket == socket);
-                        this.worlds.find(world => world.name == user.world);
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        let world = this.zoneManager.zones.find(world => world.name == user.world);
+                        console.log(world);
                         console.log(data);
                         // if(!world.map)
                         //     world.map = new Map(50, 50);
@@ -1027,7 +1318,7 @@ class SocketServer extends Singleton {
                         break;
 
                     case "chat":
-                        user = this.users.find(user => user.socket == socket);
+                        user = this.zoneManager.getPlayerBySocket(socket);
                         this.sendToAll({
                             type: "chat",
                             data: {
@@ -1042,6 +1333,11 @@ class SocketServer extends Singleton {
                         Boot.instance.handleWorldSelect(this, socket, name);
                         break;
 
+                    case "worldCreate":
+                        let { name: createName } = data;
+                        Boot.instance.handleWorldCreate(this, socket, createName);
+                        break;
+
                     default:
                         console.log("Unknown message type: " + type);
                         break;
@@ -1049,15 +1345,14 @@ class SocketServer extends Singleton {
             });
 
             socket.on("close", () => {
-                let user = this.users.find(user => user.socket == socket);
+                let user = this.zoneManager.getPlayerBySocket(socket);
                 if (user) {
                     if (user.world) {
-                        let world = this.worlds.find(world => world.name == user.world);
+                        let world = this.zoneManager.zones.find(world => world.name == user.world);
                         if (world)
                             world.players.splice(world.players.indexOf(user.name), 1);
                     }
 
-                    this.users.splice(this.users.indexOf(user), 1);
                     this.sendToAll({
                         type: "playerLeave",
                         data: {
@@ -1070,38 +1365,68 @@ class SocketServer extends Singleton {
     }
 
     send(socket, data) {
-        socket.send(JSON.stringify(data));
+        if (data.asData) {
+            if (data instanceof Zone) {
+                let zData = data.asData();
+                let zDataBlocks = [];
+
+                if (zData && zData.blocks[0].value.zone)
+                    zData.blocks.forEach((block) => {
+                        let b = block.value;
+                        zDataBlocks.push({
+                            x: b.x,
+                            y: b.y,
+                            width: b.width,
+                            height: b.height,
+                            value: b.value
+                        });
+                    });
+
+                zData.blocks = zDataBlocks;
+                socket.send(JSON.stringify(zData));
+            } else {
+                socket.send(JSON.stringify(data));
+            }
+        } else {
+            socket.send(JSON.stringify(data));
+        }
     }
 
     sendTo(user, data, world) {
-        for (let player of this.users) {
-            if (player.name == user) {
-                if (world && player.world == world)
-                    this.send(player.socket, data);
-                else if (!world)
-                    this.send(player.socket, data);
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
+                if (player.name == user) {
+                    if (world && player.world == world)
+                        this.send(player.socket, data);
+                    else if (!world)
+                        this.send(player.socket, data);
+                }
             }
-        }
     }
 
     sendToAll(data, world) {
-        for (let player of this.users) {
-            if (world && player.world == world)
-                this.send(player.socket, data);
-            else if (!world)
-                this.send(player.socket, data);
-
-        }
-    }
-
-    sendToAllExcept(user, data, world) {
-        for (let player of this.users) {
-            if (player.name != user.name)
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
                 if (world && player.world == world)
                     this.send(player.socket, data);
                 else if (!world)
                     this.send(player.socket, data);
-        }
+
+            }
+    }
+
+    sendToAllExcept(user, data, world) {
+        let w = this.zoneManager.zones.find(w => w.name == world);
+        if (w)
+            for (let player of w.players) {
+                if (player.name != user.name)
+                    if (world && player.world == world)
+                        this.send(player.socket, data);
+                    else if (!world)
+                        this.send(player.socket, data);
+            }
     }
 }
 

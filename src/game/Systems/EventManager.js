@@ -19,14 +19,54 @@ export class EventManager extends Singleton {
 
         EventManager.instance.blocks = [
             {
-                key: "dirt",
-                type: "single",
-            },
-            {
                 key: "portal_sequence",
                 type: "spritesheet",
                 frameWidth: 32,
                 frameHeight: 32,
+            },
+            {
+                key: "dirt",
+                type: "single",
+            },
+            {
+                key: "cinnabar",
+                type: "single",
+            },
+            {
+                key: "copper",
+                type: "single",
+            },
+            {
+                key: "gold",
+                type: "single",
+            },
+            {
+                key: "grass",
+                type: "single",
+            },
+            {
+                key: "iron",
+                type: "single",
+            },
+            {
+                key: "lead",
+                type: "single",
+            },
+            {
+                key: "nickel",
+                type: "single",
+            },
+            {
+                key: "silver",
+                type: "single",
+            },
+            {
+                key: "stone",
+                type: "single",
+            },
+            {
+                key: "zinc",
+                type: "single",
             },
             {
                 key: "cracked1",

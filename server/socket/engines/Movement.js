@@ -7,144 +7,219 @@ export class Movement {
 
     checkCollision(rect, zone) {
         let collides = false;
+        if (!zone)
+            return;
 
-        for (let tile of map._tiles.parts) {
-            tile = tile.value;
-            if (tile.layer == ("foreground") && tile.health > 0) {
-                if (rect.overlaps(tile.rect)) {
-                    collides = true;
+        let blocks = zone.blocks;
+        let bb = blocks.parts || blocks;
+
+        for (let tile of bb) {
+            let tRect = new Rectangle(tile.x * 32, tile.y * 32, tile.value.width, tile.value.height);
+            if(tile.value.value == (0 || 1))
+                tile.layer = "background";
+
+            if (tile.layer) {
+                if (tile.layer == ("foreground")) {
+                    if (rect.overlaps(tRect)) {
+                        collides = true;
+                    }
                 }
+            } else {
+                if (rect.overlaps(tRect))
+                    collides = true;
             }
         }
 
-        if(rect.x < 0 || rect.x > (map.width * 32) - 32 || rect.y < (-1 * map.height * 32) || rect.y > map.height * 32)
+        if (rect.x < 0 || rect.x > (zone.width * 32) - 32 || rect.y < (-1 * zone.height * 32) || rect.y > zone.height * 32)
             collides = true;
 
         return collides;
     }
 
     runMovementQueue(net) {
-        // for (let que of this.queue) {
-        //     if (!que) return;
+        for (let que of this.queue) {
+            if (!que) return;
 
-        //     if (que.x == 0 && que.y == 0) {
-        //         this.queue.splice(this.queue.indexOf(que), 1);
-        //         return;
-        //     }
+            if (que.x == 0 && que.y == 0) {
+                this.queue.splice(this.queue.indexOf(que), 1);
+                return;
+            }
 
-        //     if (que.x > 0)
-        //         que.x = 1;
-        //     else if (que.x < 0)
-        //         que.x = -1;
+            if (que.x > 0)
+                que.x = 1;
+            else if (que.x < 0)
+                que.x = -1;
 
-        //     if (que.y > 0)
-        //         que.y = 1;
-        //     else if (que.y < 0)
-        //         que.y = -1;
+            if (que.y > 0)
+                que.y = 1;
+            else if (que.y < 0)
+                que.y = -1;
 
-        //     let user = net.users.find(user => user.name == que.name);
-        //     if (user) {
-        //         let rect = user.rect;
-        //         if (!rect) {
-        //             rect = new Rectangle(user.x, user.y, user.width, user.height);
-        //             user.rect = rect;
-        //         }
+            let user = net.zoneManager.getPlayer(que.name);
+            if (user) {
+                let rect = user.rect;
+                if (!rect) {
+                    rect = new Rectangle(user.x, user.y, user.width, user.height);
+                    user.rect = rect;
+                }
 
-        //         let speed = 2;
+                let speed = 2;
 
-        //         if (user.speed)
-        //             speed = user.speed;
+                if (user.speed)
+                    speed = user.speed;
 
-        //         rect.x += que.x * speed;
-        //         rect.y += que.y * speed;
+                rect.x += que.x * speed;
+                rect.y += que.y * speed;
 
-        //         if (this.checkCollision(rect, net.map)) {
-        //             rect.setPosition(user.x, user.y);
-        //             return;
-        //         }
+                let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                if (this.checkCollision(rect, zone)) {
+                    rect.setPosition(user.x, user.y);
+                    return;
+                }
 
-        //         user.x += que.x * speed;
-        //         user.y += que.y * speed;
+                user.x += que.x * speed;
+                user.y += que.y * speed;
 
-        //         let direction = "idle";
-        //         if (que.x == 0 && que.y == 0)
-        //             direction = "idle";
-        //         else {
-        //             if (que.y == 0)
-        //                 if (que.x > 0)
-        //                     direction = "right";
-        //                 else
-        //                     direction = "left";
-        //             else
-        //                 if(que.y > 0)
-        //                     direction = "down";
-        //                 else
-        //                     direction = "up";
-        //         }
+                let direction = "idle";
+                if (que.x == 0 && que.y == 0)
+                    direction = "idle";
+                else {
+                    if (que.y == 0)
+                        if (que.x > 0)
+                            direction = "right";
+                        else
+                            direction = "left";
+                    else
+                        if (que.y > 0)
+                            direction = "down";
+                        else
+                            direction = "up";
+                }
 
-        //         net.sendToAll({
-        //             type: "move",
-        //             data: {
-        //                 name: user.name,
-        //                 x: user.x,
-        //                 y: user.y,
-        //                 direction
-        //             }
-        //         }, user.world);
-        //     }
-        // }
+                net.sendToAll({
+                    type: "move",
+                    data: {
+                        name: user.name,
+                        x: user.x,
+                        y: user.y,
+                        direction
+                    }
+                }, user.world);
+            }
+        }
 
-        // for (let user of net.users) {
-        //     let que = this.queue.find(que => que && que.name == user.name);
-        //     if ((!que) || (que && que.y == 0)) {
-        //         if (!user.rect)
-        //             user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+        for (let zone of net.zoneManager.zones) {
+            if (zone.players && zone.players.length > 0)
+                for (let user of zone.players) {
+                    let que = this.queue.find(que => que && que.name == user.name);
+                    if ((!que) || (que && que.y == 0)) {
+                        if (!user.rect)
+                            user.rect = new Rectangle(user.x, user.y, user.width, user.height);
 
-        //         let rect = user.rect;
+                        let rect = user.rect;
 
-        //         if (!rect.width || !rect.height) {
-        //             rect.width = 30;
-        //             rect.height = 30;
-        //         }
+                        if (!rect.width || !rect.height) {
+                            rect.width = 30;
+                            rect.height = 30;
+                        }
 
-        //         rect.setPosition(user.x, user.y + 1);
+                        rect.setPosition(user.x, user.y + 1);
 
-        //         if (this.checkCollision(rect, net.map)) {
-        //             rect.setPosition(user.x, user.y);
-        //             if(!user.grounded){
-        //                 net.sendToAll({
-        //                     type: "move",
-        //                     data: {
-        //                         name: user.name,
-        //                         x: user.x,
-        //                         y: user.y,
-        //                         direction: "idle"
-        //                     }
-        //                 }, user.world);
+                        let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                        if (this.checkCollision(rect, zone)) {
+                            rect.setPosition(user.x, user.y);
+                            if (!user.grounded) {
+                                net.sendToAll({
+                                    type: "move",
+                                    data: {
+                                        name: user.name,
+                                        x: user.x,
+                                        y: user.y,
+                                        direction: "idle"
+                                    }
+                                }, user.world);
 
-        //                 user.grounded = true;
-        //             }
-        //             return;
-        //         } else {
-        //             user.grounded = false;
-        //             user.y = rect.y;
+                                user.grounded = true;
+                            }
+                            return;
+                        } else {
+                            user.grounded = false;
+                            user.y = rect.y;
 
-        //             net.sendToAll({
-        //                 type: "move",
-        //                 data: {
-        //                     name: user.name,
-        //                     x: user.x,
-        //                     y: user.y,
-        //                     direction: "down"
-        //                 }
-        //             }, user.world);
-        //         }
-        //     }
-        // }
+                            net.sendToAll({
+                                type: "move",
+                                data: {
+                                    name: user.name,
+                                    x: user.x,
+                                    y: user.y,
+                                    direction: "down"
+                                }
+                            }, user.world);
+                        }
+                    }
+                }
+        }
+
+        for (let quete of this.queue) {
+            if (!quete)
+                return;
+
+            let user = net.zoneManager.getPlayer(quete.name);
+            let que = this.queue.find(que => que && que.name == user.name);
+
+            if ((!que) || (que && que.y == 0)) {
+                if (!user.rect)
+                    user.rect = new Rectangle(user.x, user.y, user.width, user.height);
+
+                let rect = user.rect;
+
+                if (!rect.width || !rect.height) {
+                    rect.width = 30;
+                    rect.height = 30;
+                }
+
+                rect.setPosition(user.x, user.y + 1);
+
+                let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
+                if (this.checkCollision(rect, zone)) {
+                    rect.setPosition(user.x, user.y);
+                    if (!user.grounded) {
+                        net.sendToAll({
+                            type: "move",
+                            data: {
+                                name: user.name,
+                                x: user.x,
+                                y: user.y,
+                                direction: "idle"
+                            }
+                        }, user.world);
+
+                        user.grounded = true;
+                    }
+                    return;
+                } else {
+                    user.grounded = false;
+                    user.y = rect.y;
+
+                    net.sendToAll({
+                        type: "move",
+                        data: {
+                            name: user.name,
+                            x: user.x,
+                            y: user.y,
+                            direction: "down"
+                        }
+                    }, user.world);
+                }
+            }
+        }
     }
 
-    movePlayer(net, socket, users, data) {
-        let user = users.find(user => user.socket == socket);
+    movePlayer(net, socket, data) {
+        let user = net.zoneManager.getPlayerBySocket(socket);
+
+        if (!user)
+            return;
 
         if (data.x == 0 && data.y == 0) {
             let que = this.queue.filter(que => que && que.name == user.name);

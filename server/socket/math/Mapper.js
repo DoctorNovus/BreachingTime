@@ -68,8 +68,14 @@ export class Mapper {
         return part;
     }
 
-    asData(){
-        let data = this.parts.map(part => part.value.asData ? part.value.asData() : part.value);
+    asData(toggle){
+        let parse = (part) => {
+            if(!toggle)
+                return part.value;
+            else
+                return part;
+        }
+        let data = this.parts.map(part => parse(part).asData ? parse(part).asData() : parse(part));
         return data;
     }
 
@@ -81,8 +87,6 @@ export class Mapper {
             let part = parts[i];
             let x = part.x;
             let y = part.y;
-            delete part.x;
-            delete part.y;
 
             if(w < x)
                 w = x;

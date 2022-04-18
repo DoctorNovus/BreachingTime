@@ -106,7 +106,7 @@ li {
 }
 
 .world-menu-world {
-  border: 1px solid black;
+  border: 1px solid goldenrod;
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
@@ -115,8 +115,9 @@ li {
   height: 4rem;
   text-align: center;
   font-size: 2rem;
-  background-color: white;
+  background-color: transparent;
   margin-bottom: 1rem;
+  color: silver;
 }
 
 .world-menu-search {
