@@ -106,3 +106,8 @@ dist
 # Personal TODO List
 todo.*
 TODO
+
+# Remove Zones
+zones
+zones/
+zones/**
