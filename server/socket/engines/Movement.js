@@ -123,7 +123,9 @@ export class Movement {
                             rect.height = 30;
                         }
 
-                        rect.setPosition(user.x, user.y + 1);
+                        let fallSpeed = user.fallSpeed ? user.fallSpeed : 1;
+
+                        rect.setPosition(user.x, user.y + fallSpeed);
 
                         let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
                         if (this.checkCollision(rect, zone)) {
@@ -141,10 +143,13 @@ export class Movement {
 
                                 user.grounded = true;
                             }
+                            user.fallSpeed = 1;
                             return;
                         } else {
                             user.grounded = false;
                             user.y = rect.y;
+                            fallSpeed += 0.1;
+                            user.fallSpeed = fallSpeed;
 
                             net.sendToAll({
                                 type: "move",

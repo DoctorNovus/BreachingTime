@@ -90,10 +90,6 @@ export class GameScene extends Phaser.Scene {
 
         Network.instance.setActive(this);
 
-        // let player = new Player(100, 100, 32, 32, this.add.sprite("idle1"), "player");
-        // player = BaseGame.instance.addEntity(player);
-        // player.animate("idle", 1);
-
         InputSystem.instance.linkEvent("keydown", (e) => {
             let newZoom;
             switch (e.key) {
@@ -216,7 +212,6 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (base.map && !base.loadedMap) {
-            console.log(`Loading map with ${base.map.length} tiles`);
             let blockMap = new Mapper();
             blockMap = Mapper.from(blockMap, base.map);
             for (let x = 0; x < blockMap.parts.length; x++) {
@@ -287,7 +282,6 @@ export class GameScene extends Phaser.Scene {
 
         for (let update of BaseGame.instance.updates.parts) {
             update = update.value;
-            console.log(update);
             let bl = BaseGame.instance.blocks.get(update.x, update.y);
             if (bl) {
                 bl.setTexture(BlockIndex.blocks[update.value]);
@@ -313,36 +307,8 @@ export class GameScene extends Phaser.Scene {
 
                 BaseGame.instance.blocks.set(update.x, update.y, bl);
 
-                console.log(bl);
-
                 BaseGame.instance.updates.parts.splice(BaseGame.instance.updates.parts.indexOf(update), 1);
             }
         }
-
-        for (let block of BaseGame.instance.blocks.parts) {
-            // block = block.value;
-            // let i = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32));
-            // let l = this.cameras.main.worldView.contains((block.x / 32) - 32, (block.y / 32));
-            // let r = this.cameras.main.worldView.contains((block.x / 32) + 32, (block.y / 32));
-            // let t = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32) - 32);
-            // let b = this.cameras.main.worldView.contains((block.x / 32), (block.y / 32) + 32);
-
-            // if (i || l || r || t || b) {
-            //     block.visible = true;
-            // } else {
-            //     block.visible = false;
-            // }
-        }
-
-
-        // let player = BaseGame.instance.findObject("player");
-        // if (player) {
-        //     player.move();
-
-        //     let camera = BaseGame.instance.camera;
-        //     if (camera) {
-        //         camera.startFollow(player.sprite);
-        //     }
-        // }
     }
 }
