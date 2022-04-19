@@ -8,7 +8,7 @@ export class BaseGame extends Singleton {
         // requestAnimationFrame(this.update.bind(this));
     }
 
-    start(config){
+    start(config) {
         this.config = config;
         this.game = new Phaser.Game(config);
         this.objects = {
@@ -23,7 +23,7 @@ export class BaseGame extends Singleton {
         this.updates = new Mapper();
         this.blocks = new Mapper();
     }
-    
+
     findObject(name) {
         for (let obj in this.objects) {
             for (let j = 0; j < this.objects[obj].length; j++) {
@@ -72,16 +72,18 @@ export class BaseGame extends Singleton {
         requestAnimationFrame(this.update.bind(this));
     }
 
-    loadMap(map){
+    loadMap(map) {
         this.map = map;
         this.loadedMap = false;
     }
 
-    deleteBlock(data){
+    deleteBlock(data) {
         let block = this.blocks.get(data.x, data.y);
-        if (block){
-            block = block.value;
-            if(block.cr)
+        if (block) {
+            if (block.value && typeof block.value == "object")
+                block = block.value;
+
+            if (block.cr)
                 block.cr.destroy();
 
             block.destroy();

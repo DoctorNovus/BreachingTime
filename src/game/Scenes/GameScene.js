@@ -287,20 +287,21 @@ export class GameScene extends Phaser.Scene {
 
         for (let update of BaseGame.instance.updates.parts) {
             update = update.value;
+            console.log(update);
             let bl = BaseGame.instance.blocks.get(update.x, update.y);
             if (bl) {
-                bl = bl.value;
-                if (bl.scene == undefined)
-                    return;
-
-                bl.setTexture(update.name);
+                bl.setTexture(BlockIndex.blocks[update.value]);
                 bl.setDepth(-1);
                 if (update.health < 3) {
                     if (!bl.cr) {
-                        bl.cr = this.add.sprite(update.x, update.y, `cracked${3 - update.health}`);
+                        bl.cr = this.add.sprite(update.x * 32, update.y * 32, `cracked${3 - update.health}`);
+                        bl.cr.displayWidth = 32;
+                        bl.cr.displayHeight = 32;
                         bl.cr.setDepth(0);
                     } else {
                         bl.cr.setTexture(`cracked${3 - update.health}`);
+                        bl.cr.displayWidth = 32;
+                        bl.cr.displayHeight = 32;
                         bl.cr.setDepth(0);
                     }
                 } else if (update.health == 3) {
@@ -309,6 +310,10 @@ export class GameScene extends Phaser.Scene {
                         delete bl.cr;
                     }
                 }
+
+                BaseGame.instance.blocks.set(update.x, update.y, bl);
+
+                console.log(bl);
 
                 BaseGame.instance.updates.parts.splice(BaseGame.instance.updates.parts.indexOf(update), 1);
             }

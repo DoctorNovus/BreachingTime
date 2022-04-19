@@ -1288,8 +1288,52 @@ class SocketServer extends Singleton {
                     case "leftInteract":
                         user = this.zoneManager.getPlayerBySocket(socket);
                         let world = this.zoneManager.zones.find(world => world.name == user.world);
-                        console.log(world);
-                        console.log(data);
+                        let interactiveBlock = world.getBlock(data.x, data.y);
+                        if (interactiveBlock && interactiveBlock.value != 0) {
+                            if (interactiveBlock.heal)
+                                clearTimeout(interactiveBlock.heal);
+
+                            if (!interactiveBlock.health)
+                                interactiveBlock.health = 3;
+
+                            if (interactiveBlock.health > 1) {
+                                interactiveBlock.health -= 1;
+
+                                this.sendToAll({
+                                    type: "setChange",
+                                    data: {
+                                        x: data.x,
+                                        y: data.y,
+                                        value: interactiveBlock.value,
+                                        health: interactiveBlock.health
+                                    }
+                                }, user.world);
+
+                                interactiveBlock.heal = setTimeout(() => {
+                                    interactiveBlock.health = 3;
+                                    this.sendToAll({
+                                        type: "setChange",
+                                        data: {
+                                            x: data.x,
+                                            y: data.y,
+                                            value: interactiveBlock.value,
+                                            health: interactiveBlock.health
+                                        }
+                                    }, user.world);
+                                }, 5000);
+                            } else {
+                                world.deleteBlock(data.x, data.y);
+
+                                this.sendToAll({
+                                    type: "deleteBlock",
+                                    data: {
+                                        x: data.x,
+                                        y: data.y,
+                                        value: interactiveBlock.value
+                                    }
+                                }, user.world);
+                            }
+                        }
                         // if(!world.map)
                         //     world.map = new Map(50, 50);
 
