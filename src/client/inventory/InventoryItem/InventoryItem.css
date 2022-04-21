@@ -1,0 +1,33 @@
+.inventory-slot, .inventory-item {
+    display: flex;
+    position: relative;
+    width: 3vw;
+    height: 3vw;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid goldenrod;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.inventory-item-image {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.inventory-item-image img {
+    width: 3vw;
+    height: wvw;
+}
+
+.inventory-item-count {
+    position: absolute;
+    color: white;
+    justify-self: right;
+    top: 5%;
+    right: 5%;
+}

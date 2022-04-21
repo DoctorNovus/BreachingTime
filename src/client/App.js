@@ -4,6 +4,7 @@ import './App.css';
 import { MainGame } from '../game';
 import { ChatBox } from './chatbox/ChatBox';
 import WorldMenu from './worldmenu/WorldMenu';
+import Inventory from './inventory/Inventory';
 
 const chatbox = React.createRef();
 const status = React.createRef();
@@ -15,6 +16,7 @@ export function App() {
     const [username, setUsername] = React.useState("");
     const [selected, setSelected] = React.useState("");
     const [worlds, setWorlds] = React.useState([]);
+    const [character, setCharacter] = React.useState([]);
 
     return (
         <div className="main">
@@ -48,7 +50,10 @@ export function App() {
             </div>
             <div className={`main-second ${started ? "" : "hidden"}`}>
                 <WorldMenu worlds={worlds} setSelected={setSelected} shown={selected.length == 0 ? true : false} />
-                <ChatBox ref={chatbox} shown={selected.length > 0 ? true : false} />
+                <div className={`${selected.length == 0 ? "hidden" : ""}`}>
+                    {/* <ChatBox ref={chatbox} shown={selected.length > 0 ? true : false} /> */}
+                    <Inventory inventory={character.inventory} profile={character.profile} />
+                </div>
             </div>
         </div>
     );
