@@ -5,6 +5,8 @@ export class GameConfig {
         let obj = {};
         obj.type = type || Phaser.AUTO;
 
+        obj.resolution = window.devicePixelRatio;
+        
         if (parent)
             obj.parent = parent;
 

@@ -35,6 +35,8 @@ export class Player extends Entity {
         this.weapon.sprite.x = this.weapon.x;
         this.weapon.sprite.y = this.weapon.y;
         this.weapon.sprite.setOrigin(this.weapon.origin.x, this.weapon.origin.y);
+
+        this.hideWeapon();
     }
 
     hideWeapon() {

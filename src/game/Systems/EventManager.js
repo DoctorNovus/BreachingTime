@@ -111,8 +111,7 @@ export class EventManager extends Singleton {
                     "walking4",
                     "walking5",
                     "walking6",
-                    "walking7",
-                    "walking8"
+                    "walking7"
                 ],
             },
             {

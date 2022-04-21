@@ -24,7 +24,6 @@ export class FramesList extends Singleton {
             { texture: "walking5" },
             { texture: "walking6" },
             { texture: "walking7" },
-            { texture: "walking8" }
         ],
 
         "weapon_idle": [
