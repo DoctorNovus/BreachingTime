@@ -1,31 +1,97 @@
+import { Database } from "../database/Database";
 import { Player } from "../entities/Player";
-import { Mapper } from "../math/Mapper";
 import { Singleton } from "../systems/Singleton";
 
 export class Boot extends Singleton {
 
-    login(server, user) {
+    async login(server, user) {
         let zones = server.zoneManager.zones;
-        server.send(user.socket, {
-            type: "worldMenu",
-            data: {
-                worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
-            }
-        });
+        let pDB = await Database.instance.users.findOne({ username: user.name });
 
-        // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
-        // server.send(user.socket, {
-        //     type: "worldMenu",
-        //     data: {
-        //         worlds
-        //     }
-        // });
+        if (pDB && pDB.world && pDB.world.trim() != "") {
+            let world = zones.find(world => world.name == pDB.world);
+            if (world) {
+                let player = new Player(user.name, user.socket, pDB.x, pDB.y);
+                player.setWorld(pDB.world);
+                player.setLevel(pDB.level);
+                player.setInventory(pDB.inventory);
+                player.setSlots(pDB.slots);
+
+                world.players.push(player);
+
+                server.send(user.socket, {
+                    type: "worldSkip",
+                    data: {
+                        name: pDB.world
+                    }
+                });
+
+                server.send(user.socket, {
+                    type: "selfJoin",
+                    data: {
+                        name: player.name,
+                        x: player.x,
+                        y: player.y
+                    }
+                });
+
+                for (let player of world.players) {
+                    if (world.players.find(p => p.name == player.name)) {
+                        server.send(user.socket, {
+                            type: "playerJoin",
+                            data: {
+                                name: player.name,
+                                x: player.x,
+                                y: player.y
+                            }
+                        });
+                    }
+                }
+
+                server.sendToAllExcept(player, {
+                    type: "playerJoin",
+                    data: {
+                        name: player.name,
+                        x: player.x,
+                        y: player.y
+                    }
+                }, pDB.world);
+
+                let w = world;
+                let bb = w.blocks.asData();
+                for (let b of bb) {
+                    delete b.zone;
+                }
+
+                server.send(user.socket, {
+                    type: "loadMap",
+                    data: {
+                        map: bb
+                    }
+                });
+
+                server.send(user.socket, {
+                    type: "inventoryUpdate",
+                    data: {
+                        items: player.constructInventory(),
+                        profile: player.constructProfile()
+                    }
+                });
+            }
+        } else {
+            server.send(user.socket, {
+                type: "worldMenu",
+                data: {
+                    worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
+                }
+            });
+        }
     }
 
     handleWorldCreate(server, socket, name) {
         let zone = server.zoneManager.zones.find(world => world.name == name);
         if (!zone) {
-            let zone = server.zoneManager.generateZone(name, 50, 80);
+            server.zoneManager.generateZone(name, 50, 80);
             this.handleWorldSelect(server, socket, name);
         } else {
             server.send(socket, {
@@ -133,44 +199,4 @@ export class Boot extends Singleton {
             });
         }
     }
-
-    // login(server, user) {
-    //     console.log(`${user.name} logged in`);
-
-    //     server.send(user.socket, {
-    //         type: "selfJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     for (let player of world.players) {
-    //         server.send(user.socket, {
-    //             type: "playerJoin",
-    //             data: {
-    //                 name: player.name,
-    //                 x: player.x,
-    //                 y: player.y
-    //             }
-    //         });
-    //     }
-
-    //     server.sendToAllExcept(user, {
-    //         type: "playerJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     server.send(user.socket, {
-    //         type: "loadMap",
-    //         data: {
-    //             map: server.map.inst
-    //         }
-    //     });
-    // }
 }

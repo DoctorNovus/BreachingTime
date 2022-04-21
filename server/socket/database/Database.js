@@ -1,10 +1,10 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 import { Singleton } from '../systems/Singleton';
 
 const url = 'mongodb://localhost:27017';
 
 export class Database extends Singleton {
-    async connect(){
+    async connect() {
         this.client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
         await this.client.connect();
         console.log("Connected to database");

@@ -43,7 +43,7 @@ export function App() {
                     </div>
                 </div>
                 <div className={`main-first-game ${loggedIn ? "" : "hidden"}`} onClick={() => {
-                    startGame.bind(this)(setStarted, username, setWorlds, setCharacter, kb, setKb);
+                    startGame.bind(this)(setStarted, username, setSelected, setWorlds, setCharacter, kb, setKb);
                 }}>
                     <img src="/assets/ui/startBG.gif" alt="startBG" />
                     <em id="startButton">Click the screen to start...</em>
@@ -126,7 +126,7 @@ export async function register(e, setLoggedIn, setUsername) {
     }
 }
 
-export function startGame(setStarted, username, setWorlds, setCharacter, keybinds, setKeybindElems) {
+export function startGame(setStarted, username, setSelected, setWorlds, setCharacter, keybinds, setKeybindElems) {
     setStarted(true);
 
     let game = new MainGame();
@@ -156,6 +156,8 @@ export function startGame(setStarted, username, setWorlds, setCharacter, keybind
 
         setKeybindElems({ kb });
     }
+
+    MainGame.instance.setSelected = setSelected;
 
     game.start(username);
 }

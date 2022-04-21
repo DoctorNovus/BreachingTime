@@ -1,4 +1,5 @@
 import { Mapper } from "../math/Mapper";
+import { PlayerManager } from "../entities/PlayerManager";
 
 export class Zone {
 
@@ -8,6 +9,7 @@ export class Zone {
         this.name = name;
 
         this.blocks = new Mapper();
+        this.playerManager = new PlayerManager();
     }
 
     addBlock(x, y, block) {
@@ -47,5 +49,21 @@ export class Zone {
         zone.blocks = Mapper.from(zone.blocks, data.blocks);
 
         return zone;
+    }
+
+    get players(){
+        return this.playerManager.players;
+    }
+
+    set players(players){
+        this.playerManager.players = players;
+    }
+
+    savePlayers() {
+        this.playerManager.savePlayers();
+    }
+
+    savePlayer(player) {
+        this.playerManager.savePlayer(player);
     }
 }

@@ -100,4 +100,8 @@ export class Server {
             console.log("Server started on port " + this.port);
         });
     }
+
+    async stop(){
+        this.serv.close();
+    }
 }

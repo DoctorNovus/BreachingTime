@@ -23,11 +23,12 @@ export class SocketServer extends Singleton {
         this.movement = new Movement(this);
         this.zoneManager = new ZoneManager();
         this.zoneManager.loadZones();
+        setInterval(this.save.bind(this), 60000);
 
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
 
         this.wss.on("connection", (socket) => {
-            socket.on("message", (message) => {
+            socket.on("message", async (message) => {
                 let { type, data } = JSON.parse(message);
                 let user = {};
                 switch (type) {
@@ -51,7 +52,7 @@ export class SocketServer extends Singleton {
 
                             this.users.push(user);
 
-                            Boot.instance.login(this, user);
+                            await Boot.instance.login(this, user);
                         } else {
                             this.send(socket, {
                                 type: "login",
@@ -132,31 +133,6 @@ export class SocketServer extends Singleton {
                                 });
                             }
                         }
-                        // if(!world.map)
-                        //     world.map = new Map(50, 50);
-
-                        // let til = world.map.interact(world, data, this);
-                        // if (til)
-                        //     this.sendToAll({
-                        //         type: "setChange",
-                        //         data: {
-                        //             name: til.name,
-                        //             x: til.x,
-                        //             y: til.y,
-                        //             health: til.health
-                        //         }
-                        //     }, world.name);
-                        // else {
-                        //     world.map.delete(data.x, data.y);
-                        //     this.sendToAll({
-                        //         type: "deleteBlock",
-                        //         data: {
-                        //             name: data.name,
-                        //             x: data.x,
-                        //             y: data.y,
-                        //         }
-                        //     }, world.name);
-                        // }
                         break;
 
                     case "chat":
@@ -191,6 +167,7 @@ export class SocketServer extends Singleton {
                 if (user) {
                     if (user.world) {
                         let world = this.zoneManager.zones.find(world => world.name == user.world);
+                        world.savePlayer(user);
                         if (world)
                             world.players.splice(world.players.indexOf(user.name), 1);
                     }
@@ -204,6 +181,11 @@ export class SocketServer extends Singleton {
                 }
             })
         });
+    }
+
+    stop() {
+        console.log(`Socket server stopped`);
+        this.save();
     }
 
     send(socket, data) {
@@ -269,5 +251,9 @@ export class SocketServer extends Singleton {
                     else if (!world)
                         this.send(player.socket, data);
             }
+    }
+
+    save() {
+        this.zoneManager.saveZones();
     }
 }

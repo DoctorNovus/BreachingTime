@@ -31,6 +31,10 @@ export class Player {
         this.world = world;
     }
 
+    setSlots(slots){
+        this.slots = slots;
+    }
+    
     constructInventory(){
         return this.inventory || [];
     }
@@ -38,6 +42,18 @@ export class Player {
     constructProfile(){
         return {
             name: this.name,
+            level: this.level,
+            world: this.world,
+            slots: this.slots
+        }
+    }
+
+    asData(){
+        return {
+            name: this.name,
+            x: this.x,
+            y: this.y,
+            inventory: this.inventory,
             level: this.level,
             world: this.world,
             slots: this.slots

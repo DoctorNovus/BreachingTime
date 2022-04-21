@@ -7,6 +7,7 @@ var bcrypt = require('bcrypt');
 var WebSocket = require('ws');
 var SimplexNoise = require('simplex-noise');
 var fs = require('fs');
+var readline = require('readline');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -16,6 +17,7 @@ var bcrypt__default = /*#__PURE__*/_interopDefaultLegacy(bcrypt);
 var WebSocket__default = /*#__PURE__*/_interopDefaultLegacy(WebSocket);
 var SimplexNoise__default = /*#__PURE__*/_interopDefaultLegacy(SimplexNoise);
 var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
+var readline__default = /*#__PURE__*/_interopDefaultLegacy(readline);
 
 class Singleton {
 
@@ -34,7 +36,7 @@ class Singleton {
 const url = 'mongodb://localhost:27017';
 
 class Database extends Singleton {
-    async connect(){
+    async connect() {
         this.client = new mongodb.MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
         await this.client.connect();
         console.log("Connected to database");
@@ -165,6 +167,10 @@ class Server {
             console.log("Server started on port " + this.port);
         });
     }
+
+    async stop(){
+        this.serv.close();
+    }
 }
 
 class Player {
@@ -200,6 +206,10 @@ class Player {
         this.world = world;
     }
 
+    setSlots(slots){
+        this.slots = slots;
+    }
+    
     constructInventory(){
         return this.inventory || [];
     }
@@ -212,131 +222,104 @@ class Player {
             slots: this.slots
         }
     }
-}
 
-class Mapper {
-    width = 0;
-    height = 0;
-
-    constructor(width, height = 1) {
-        this.parts = [];
-
-        this.width = width;
-        this.height = height;
-
-        if (width) {
-            for (let i = 0; i < width; i++) {
-                for (let j = 0; j < height; j++) {
-                    this.set(i, j, 0);
-                }
-            }
+    asData(){
+        return {
+            name: this.name,
+            x: this.x,
+            y: this.y,
+            inventory: this.inventory,
+            level: this.level,
+            world: this.world,
+            slots: this.slots
         }
-    }
-
-    loop(callback) {
-        for (let i = 0; i < this.parts.length; i++) {
-            callback(this.parts[i]);
-        }
-    }
-
-    set(x, y, value) {
-        if (!this.get(x, y))
-            this.parts.push({ x, y, value });
-        else
-            this.parts.find(part => part.x === x && part.y === y).value = value;
-
-        return this.get(x, y);
-    }
-
-    get(x, y) {
-        let part = this.parts.find(part => part.x == x && part.y == y);
-        if (part && part.value)
-            return part.value;
-        else
-            return null;
-    }
-
-    getFull(x, y) {
-        let part = this.parts.find(part => part.x == x && part.y == y);
-        if (part)
-            return part;
-        else
-            return null;
-    }
-
-
-    add(x, y, value) {
-        let part = this.get(x, y);
-        if (!part)
-            part = 0;
-
-        part += value;
-        this.set(x, y, part);
-        return part;
-    }
-
-    divide(x, y, value) {
-        let part = this.get(x, y);
-        if (!part)
-            part = 0;
-        part /= value;
-        this.set(x, y, part);
-        return part;
-    }
-
-    asData(toggle){
-        let parse = (part) => {
-            if(!toggle)
-                return part.value;
-            else
-                return part;
-        };
-        let data = this.parts.map(part => parse(part).asData ? parse(part).asData() : parse(part));
-        return data;
-    }
-
-    static from(mapper, parts) {
-        let w = 0;
-        let h = 0;
-
-        for (let i = 0; i < parts.length; i++) {
-            let part = parts[i];
-            let x = part.x;
-            let y = part.y;
-
-            if(w < x)
-                w = x;
-            if(h < y)
-                h = y;
-
-            mapper.set(x, y, part);
-        }
-
-        mapper.width = w + 1;
-        mapper.height = h + 1;
-
-        return mapper;
     }
 }
 
 class Boot extends Singleton {
 
-    login(server, user) {
+    async login(server, user) {
         let zones = server.zoneManager.zones;
-        server.send(user.socket, {
-            type: "worldMenu",
-            data: {
-                worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
-            }
-        });
+        let pDB = await Database.instance.users.findOne({ username: user.name });
 
-        // let worlds = server.worlds.map(world => ({ name: world.name, players: world.players.length, maxPlayers: world.maxPlayers }));
-        // server.send(user.socket, {
-        //     type: "worldMenu",
-        //     data: {
-        //         worlds
-        //     }
-        // });
+        if (pDB && pDB.world && pDB.world.trim() != "") {
+            let world = zones.find(world => world.name == pDB.world);
+            if (world) {
+                let player = new Player(user.name, user.socket, pDB.x, pDB.y);
+                player.setWorld(pDB.world);
+                player.setLevel(pDB.level);
+                player.setInventory(pDB.inventory);
+                player.setSlots(pDB.slots);
+
+                world.players.push(player);
+
+                server.send(user.socket, {
+                    type: "worldSkip",
+                    data: {
+                        name: pDB.world
+                    }
+                });
+
+                server.send(user.socket, {
+                    type: "selfJoin",
+                    data: {
+                        name: player.name,
+                        x: player.x,
+                        y: player.y
+                    }
+                });
+
+                for (let player of world.players) {
+                    if (world.players.find(p => p.name == player.name)) {
+                        server.send(user.socket, {
+                            type: "playerJoin",
+                            data: {
+                                name: player.name,
+                                x: player.x,
+                                y: player.y
+                            }
+                        });
+                    }
+                }
+
+                server.sendToAllExcept(player, {
+                    type: "playerJoin",
+                    data: {
+                        name: player.name,
+                        x: player.x,
+                        y: player.y
+                    }
+                }, pDB.world);
+
+                let w = world;
+                let bb = w.blocks.asData();
+                for (let b of bb) {
+                    delete b.zone;
+                }
+
+                server.send(user.socket, {
+                    type: "loadMap",
+                    data: {
+                        map: bb
+                    }
+                });
+
+                server.send(user.socket, {
+                    type: "inventoryUpdate",
+                    data: {
+                        items: player.constructInventory(),
+                        profile: player.constructProfile()
+                    }
+                });
+            }
+        } else {
+            server.send(user.socket, {
+                type: "worldMenu",
+                data: {
+                    worlds: zones.map(zone => ({ name: zone.name, players: zone.players ? zone.players.length : 0, maxPlayers: 50 }))
+                }
+            });
+        }
     }
 
     handleWorldCreate(server, socket, name) {
@@ -450,46 +433,6 @@ class Boot extends Singleton {
             });
         }
     }
-
-    // login(server, user) {
-    //     console.log(`${user.name} logged in`);
-
-    //     server.send(user.socket, {
-    //         type: "selfJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     for (let player of world.players) {
-    //         server.send(user.socket, {
-    //             type: "playerJoin",
-    //             data: {
-    //                 name: player.name,
-    //                 x: player.x,
-    //                 y: player.y
-    //             }
-    //         });
-    //     }
-
-    //     server.sendToAllExcept(user, {
-    //         type: "playerJoin",
-    //         data: {
-    //             name: user.name,
-    //             x: user.x,
-    //             y: user.y
-    //         }
-    //     });
-
-    //     server.send(user.socket, {
-    //         type: "loadMap",
-    //         data: {
-    //             map: server.map.inst
-    //         }
-    //     });
-    // }
 }
 
 class Rectangle {
@@ -856,6 +799,151 @@ class Block {
     }
 }
 
+class Mapper {
+    width = 0;
+    height = 0;
+
+    constructor(width, height = 1) {
+        this.parts = [];
+
+        this.width = width;
+        this.height = height;
+
+        if (width) {
+            for (let i = 0; i < width; i++) {
+                for (let j = 0; j < height; j++) {
+                    this.set(i, j, 0);
+                }
+            }
+        }
+    }
+
+    loop(callback) {
+        for (let i = 0; i < this.parts.length; i++) {
+            callback(this.parts[i]);
+        }
+    }
+
+    set(x, y, value) {
+        if (!this.get(x, y))
+            this.parts.push({ x, y, value });
+        else
+            this.parts.find(part => part.x === x && part.y === y).value = value;
+
+        return this.get(x, y);
+    }
+
+    get(x, y) {
+        let part = this.parts.find(part => part.x == x && part.y == y);
+        if (part && part.value)
+            return part.value;
+        else
+            return null;
+    }
+
+    getFull(x, y) {
+        let part = this.parts.find(part => part.x == x && part.y == y);
+        if (part)
+            return part;
+        else
+            return null;
+    }
+
+
+    add(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+
+        part += value;
+        this.set(x, y, part);
+        return part;
+    }
+
+    divide(x, y, value) {
+        let part = this.get(x, y);
+        if (!part)
+            part = 0;
+        part /= value;
+        this.set(x, y, part);
+        return part;
+    }
+
+    asData(toggle){
+        let parse = (part) => {
+            if(!toggle)
+                return part.value;
+            else
+                return part;
+        };
+        let data = this.parts.map(part => parse(part).asData ? parse(part).asData() : parse(part));
+        return data;
+    }
+
+    static from(mapper, parts) {
+        let w = 0;
+        let h = 0;
+
+        for (let i = 0; i < parts.length; i++) {
+            let part = parts[i];
+            let x = part.x;
+            let y = part.y;
+
+            if(w < x)
+                w = x;
+            if(h < y)
+                h = y;
+
+            mapper.set(x, y, part);
+        }
+
+        mapper.width = w + 1;
+        mapper.height = h + 1;
+
+        return mapper;
+    }
+}
+
+class PlayerManager {
+    constructor() {
+        this.players = [];
+    }
+
+    addPlayer(player) {
+        this.players.push(player);
+    }
+
+    getPlayer(name) {
+        return this.players.find(player => player.name == name);
+    }
+
+    deletePlayer(player) {
+        this.players.splice(this.players.indexOf(player), 1);
+    }
+
+    savePlayers() {
+        console.log(`Saving ${this.players.length} players`);
+        for (let player of this.players) {
+            this.savePlayer(player);
+        }
+    }
+
+    savePlayer(player) {
+        try {
+            let pData = player.asData();
+            let pDB = Database.instance.users.findOne({ username: player.name });
+            if (pDB) {
+                Database.instance.users.updateOne({ username: player.name }, { $set: pData });
+            } else {
+                Database.instance.users.insertOne({ username: player.name, ...pData });
+            }
+        } catch (e) {
+            console.log(`Error saving player ${player.name}`);
+            console.log(e);
+        }
+    }
+}
+
 class Zone$1 {
 
     constructor(width, height, name) {
@@ -864,6 +952,7 @@ class Zone$1 {
         this.name = name;
 
         this.blocks = new Mapper();
+        this.playerManager = new PlayerManager();
     }
 
     addBlock(x, y, block) {
@@ -903,6 +992,22 @@ class Zone$1 {
         zone.blocks = Mapper.from(zone.blocks, data.blocks);
 
         return zone;
+    }
+
+    get players(){
+        return this.playerManager.players;
+    }
+
+    set players(players){
+        this.playerManager.players = players;
+    }
+
+    savePlayers() {
+        this.playerManager.savePlayers();
+    }
+
+    savePlayer(player) {
+        this.playerManager.savePlayer(player);
     }
 }
 
@@ -1216,30 +1321,50 @@ class ZoneManager {
     }
 
     saveZones() {
+        console.log(`Saving ${this.zones.length} zones`);
         for (let zone of this.zones) {
             this.saveZone(zone);
         }
     }
 
     saveZone(zone) {
-        let zData = zone.asData();
-        let zDataBlocks = [];
+        try {
+            zone.savePlayers();
 
-        if (zData && zData.blocks[0].value.zone)
-            zData.blocks.forEach((block) => {
-                let b = block.value;
-                zDataBlocks.push({
-                    x: b.x,
-                    y: b.y,
-                    width: b.width,
-                    height: b.height,
-                    value: b.value
+            let zData = zone.asData();
+            let zDataBlocks = [];
+
+            if(zData.blocks[0].value.zone){
+                let z2Data = Object.create(zData);
+                z2Data.blocks = zData.blocks.map(block => {
+                    let b = Object.create(block);
+                    delete b.zone;
+                    return b;
                 });
-            });
+                zData = z2Data;
+            }
 
-        zData.blocks = zDataBlocks;
+            if (zData && zData.blocks && zData.blocks[0]) {
+                zData.blocks.forEach((block) => {
+                    let b = block.value;
+                    zDataBlocks.push({
+                        x: b.x,
+                        y: b.y,
+                        width: b.width,
+                        height: b.height,
+                        value: b.value
+                    });
+                });
 
-        FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zData));
+                zData.blocks = zDataBlocks;
+
+                FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zData));
+                console.log(`Saved zone ${zone.name}`);
+            }
+        } catch (e) {
+            console.log(`Failed to save zone ${zone.name}`);
+            console.log(e);
+        }
     }
 
     loadZones() {
@@ -1302,11 +1427,12 @@ class SocketServer extends Singleton {
         this.movement = new Movement(this);
         this.zoneManager = new ZoneManager();
         this.zoneManager.loadZones();
+        setInterval(this.save.bind(this), 60000);
 
         setInterval(() => this.movement.runMovementQueue(this), 1000 / 60);
 
         this.wss.on("connection", (socket) => {
-            socket.on("message", (message) => {
+            socket.on("message", async (message) => {
                 let { type, data } = JSON.parse(message);
                 let user = {};
                 switch (type) {
@@ -1330,7 +1456,7 @@ class SocketServer extends Singleton {
 
                             this.users.push(user);
 
-                            Boot.instance.login(this, user);
+                            await Boot.instance.login(this, user);
                         } else {
                             this.send(socket, {
                                 type: "login",
@@ -1411,31 +1537,6 @@ class SocketServer extends Singleton {
                                 });
                             }
                         }
-                        // if(!world.map)
-                        //     world.map = new Map(50, 50);
-
-                        // let til = world.map.interact(world, data, this);
-                        // if (til)
-                        //     this.sendToAll({
-                        //         type: "setChange",
-                        //         data: {
-                        //             name: til.name,
-                        //             x: til.x,
-                        //             y: til.y,
-                        //             health: til.health
-                        //         }
-                        //     }, world.name);
-                        // else {
-                        //     world.map.delete(data.x, data.y);
-                        //     this.sendToAll({
-                        //         type: "deleteBlock",
-                        //         data: {
-                        //             name: data.name,
-                        //             x: data.x,
-                        //             y: data.y,
-                        //         }
-                        //     }, world.name);
-                        // }
                         break;
 
                     case "chat":
@@ -1470,6 +1571,7 @@ class SocketServer extends Singleton {
                 if (user) {
                     if (user.world) {
                         let world = this.zoneManager.zones.find(world => world.name == user.world);
+                        world.savePlayer(user);
                         if (world)
                             world.players.splice(world.players.indexOf(user.name), 1);
                     }
@@ -1483,6 +1585,11 @@ class SocketServer extends Singleton {
                 }
             });
         });
+    }
+
+    stop() {
+        console.log(`Socket server stopped`);
+        this.save();
     }
 
     send(socket, data) {
@@ -1549,11 +1656,55 @@ class SocketServer extends Singleton {
                         this.send(player.socket, data);
             }
     }
+
+    save() {
+        this.zoneManager.saveZones();
+    }
 }
 
-(async() => {
+(async () => {
     let server = new Server(8080);
     await server.start();
     let socketServer = new SocketServer(server);
     await socketServer.start();
+    setTimeout(async () => {
+        await commandPrompt(server, socketServer);
+    }, 3000);
 })();
+
+async function commandPrompt(server, socketServer) {
+    let rl = readline__default["default"].createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    let questi = () => {
+        rl.question("> ", (cmd) => {
+            let close = false;
+            
+            switch (cmd.trim().toLowerCase()) {
+                case "stop":
+                    server.stop();
+                    socketServer.stop();
+                    close = true;
+                    break;
+
+                case "save":
+                    socketServer.save();
+                    break;
+
+                default:
+                    console.log(`Unknown command: ${cmd}`);
+                    break;
+
+            }
+
+            if (close)
+                process.exit();
+            else
+                questi();
+        });
+    };
+
+    questi();
+}

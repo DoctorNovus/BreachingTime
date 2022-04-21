@@ -37,30 +37,50 @@ export class ZoneManager {
     }
 
     saveZones() {
+        console.log(`Saving ${this.zones.length} zones`);
         for (let zone of this.zones) {
             this.saveZone(zone);
         }
     }
 
     saveZone(zone) {
-        let zData = zone.asData();
-        let zDataBlocks = [];
+        try {
+            zone.savePlayers();
 
-        if (zData && zData.blocks[0].value.zone)
-            zData.blocks.forEach((block) => {
-                let b = block.value;
-                zDataBlocks.push({
-                    x: b.x,
-                    y: b.y,
-                    width: b.width,
-                    height: b.height,
-                    value: b.value
+            let zData = zone.asData();
+            let zDataBlocks = [];
+
+            if(zData.blocks[0].value.zone){
+                let z2Data = Object.create(zData);
+                z2Data.blocks = zData.blocks.map(block => {
+                    let b = Object.create(block);
+                    delete b.zone;
+                    return b;
                 });
-            });
+                zData = z2Data;
+            }
 
-        zData.blocks = zDataBlocks;
+            if (zData && zData.blocks && zData.blocks[0]) {
+                zData.blocks.forEach((block) => {
+                    let b = block.value;
+                    zDataBlocks.push({
+                        x: b.x,
+                        y: b.y,
+                        width: b.width,
+                        height: b.height,
+                        value: b.value
+                    });
+                });
 
-        FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zData));
+                zData.blocks = zDataBlocks;
+
+                FileSystem.writeFile(`${__dirname}/zones/${zone.name}/config.json`, JSON.stringify(zData));
+                console.log(`Saved zone ${zone.name}`);
+            }
+        } catch (e) {
+            console.log(`Failed to save zone ${zone.name}`);
+            console.log(e);
+        }
     }
 
     loadZones() {

@@ -10,9 +10,7 @@ export default function InventoryItem({ item, active, setActive, slot }) {
     if (!item) {
         item = {};
     } else if (item.id != 0) {
-        console.log(item);
         iName = BlockIndex.blocks[item.id];
-        console.log(iName);
     }
 
     if (slot)
