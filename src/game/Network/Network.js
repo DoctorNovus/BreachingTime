@@ -114,6 +114,10 @@ export class Network extends Singleton {
                     MainGame.instance.onWorldMenu(data);
                     break;
 
+                case "inventoryUpdate":
+                    MainGame.instance.onInventory(data);
+                    break;
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;

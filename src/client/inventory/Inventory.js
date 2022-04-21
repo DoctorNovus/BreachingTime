@@ -4,16 +4,20 @@ import InventoryItem from "./InventoryItem/InventoryItem";
 
 import "./Inventory.css";
 
-export default function Inventory({ inventory, profile }) {
-    if (!inventory || !profile) {
+export default function Inventory({ inventory, profile, shown }) {
+    if (!inventory)
         inventory = new Array(64).fill({ id: 0, count: 0, img: "" });
-        profile = {};
+    else if(inventory.length < 64){
+        inventory = inventory.concat(new Array(64 - inventory.length).fill({ id: 0, count: 0, img: "" }));
     }
 
-    let [items, setItems] = useState(inventory);
+    if (!profile)
+        profile = {};
+
     let [active, setActive] = useState({});
+
     return (
-        <div className="inventory">
+        <div className={`inventory ${shown ? "" : "hidden"}`}>
             <div className="inventory-profile">
                 <div className="inventory-profile-name">
                     <span>{profile.name || "No Name"}</span>
@@ -21,10 +25,10 @@ export default function Inventory({ inventory, profile }) {
                 </div>
                 <div className="inventory-profile-build">
                     <div className="inventory-profile-top">
-                        <InventoryItem item={profile.leftHand} slot={1} />
-                        <InventoryItem item={profile.head} slot={2} />
-                        <InventoryItem item={profile.backPiece} slot={3} />
-                        <InventoryItem item={profile.legs} slot={4} />
+                        <InventoryItem item={profile.slots && profile.slots.leftHand} slot={1} />
+                        <InventoryItem item={profile.slots && profile.slots.head} slot={2} />
+                        <InventoryItem item={profile.slots && profile.slots.backPiece} slot={3} />
+                        <InventoryItem item={profile.slots && profile.slots.legs} slot={4} />
                     </div>
                     <div className="inventory-profile-center">
                         <div className="inventory-profile-center-container">
@@ -32,15 +36,15 @@ export default function Inventory({ inventory, profile }) {
                         </div>
                     </div>
                     <div className="inventory-profile-bottom">
-                        <InventoryItem item={profile.rightHand} slot={5} />
-                        <InventoryItem item={profile.chest} slot={6} />
-                        <InventoryItem item={profile.feet} slot={7} />
+                        <InventoryItem item={profile.slots && profile.slots.rightHand} slot={5} />
+                        <InventoryItem item={profile.slots && profile.slots.chest} slot={6} />
+                        <InventoryItem item={profile.slots && profile.slots.feet} slot={7} />
                     </div>
                 </div>
             </div>
             <div className="inventory-items">
                 <ul>
-                    {items.map((item, index) => {
+                    {inventory.map((item, index) => {
                         return (
                             <li key={index}>
                                 <InventoryItem item={item} active={active} setActive={setActive} />
@@ -51,8 +55,4 @@ export default function Inventory({ inventory, profile }) {
             </div>
         </div>
     );
-}
-
-function setSlot(slots, item, slot) {
-
 }

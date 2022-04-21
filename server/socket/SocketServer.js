@@ -113,6 +113,23 @@ export class SocketServer extends Singleton {
                                         value: interactiveBlock.value
                                     }
                                 }, user.world);
+
+                                let ite = user.inventory.find(item => item.id == interactiveBlock.value);
+                                if (ite)
+                                    ite.count += 1;
+                                else
+                                    user.inventory.push({
+                                        id: interactiveBlock.value,
+                                        count: 1
+                                    });
+
+                                this.send(user.socket, {
+                                    type: "inventoryUpdate",
+                                    data: {
+                                        items: user.constructInventory(),
+                                        profile: user.constructProfile()
+                                    }
+                                });
                             }
                         }
                         // if(!world.map)

@@ -1,3 +1,4 @@
+import { Player } from "../entities/Player";
 import { Mapper } from "../math/Mapper";
 import { Singleton } from "../systems/Singleton";
 
@@ -46,12 +47,12 @@ export class Boot extends Singleton {
             if (!user) {
                 let usey = server.users.find(user => user.socket == socket);
                 if (usey) {
-                    user = { ...usey };
+                    user = new Player(usey.name, usey.socket, usey.x, usey.y);
                     world.players.push(user);
                 }
             }
 
-            user.world = name;
+            user.setWorld(name);
 
             if (!world.spawnPoint)
                 for (let i = 0; i < world.blocks.asData().length; i++) {
@@ -120,6 +121,14 @@ export class Boot extends Singleton {
                 type: "loadMap",
                 data: {
                     map: bb
+                }
+            });
+
+            server.send(user.socket, {
+                type: "inventoryUpdate",
+                data: {
+                    items: user.constructInventory(),
+                    profile: user.constructProfile()
                 }
             });
         }

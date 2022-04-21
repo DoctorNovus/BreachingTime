@@ -167,6 +167,53 @@ class Server {
     }
 }
 
+class Player {
+    constructor(name, socket, x, y){
+        this.name = name;
+        this.socket = socket;
+        this.x = x;
+        this.y = y;
+        this.inventory = [];
+        this.slots = [];
+        this.level = 1;
+        this.world = "";
+    }
+
+    setName(name){
+        this.name = name;
+    }
+
+    setPosition(x, y){
+        this.x = x;
+        this.y = y;
+    }
+
+    setInventory(inventory){
+        this.inventory = inventory;
+    }
+
+    setLevel(level){
+        this.level = level;
+    }
+
+    setWorld(world){
+        this.world = world;
+    }
+
+    constructInventory(){
+        return this.inventory || [];
+    }
+
+    constructProfile(){
+        return {
+            name: this.name,
+            level: this.level,
+            world: this.world,
+            slots: this.slots
+        }
+    }
+}
+
 class Mapper {
     width = 0;
     height = 0;
@@ -317,12 +364,12 @@ class Boot extends Singleton {
             if (!user) {
                 let usey = server.users.find(user => user.socket == socket);
                 if (usey) {
-                    user = { ...usey };
+                    user = new Player(usey.name, usey.socket, usey.x, usey.y);
                     world.players.push(user);
                 }
             }
 
-            user.world = name;
+            user.setWorld(name);
 
             if (!world.spawnPoint)
                 for (let i = 0; i < world.blocks.asData().length; i++) {
@@ -391,6 +438,14 @@ class Boot extends Singleton {
                 type: "loadMap",
                 data: {
                     map: bb
+                }
+            });
+
+            server.send(user.socket, {
+                type: "inventoryUpdate",
+                data: {
+                    items: user.constructInventory(),
+                    profile: user.constructProfile()
                 }
             });
         }
@@ -1337,6 +1392,23 @@ class SocketServer extends Singleton {
                                         value: interactiveBlock.value
                                     }
                                 }, user.world);
+
+                                let ite = user.inventory.find(item => item.id == interactiveBlock.value);
+                                if (ite)
+                                    ite.count += 1;
+                                else
+                                    user.inventory.push({
+                                        id: interactiveBlock.value,
+                                        count: 1
+                                    });
+
+                                this.send(user.socket, {
+                                    type: "inventoryUpdate",
+                                    data: {
+                                        items: user.constructInventory(),
+                                        profile: user.constructProfile()
+                                    }
+                                });
                             }
                         }
                         // if(!world.map)

@@ -86,3 +86,7 @@
 .inventory-items > ul > li {
   flex: 1 0 12.4%;
 }
+
+.hidden {
+  display: none;
+}

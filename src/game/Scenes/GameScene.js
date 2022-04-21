@@ -1,3 +1,4 @@
+import { MainGame } from "..";
 import { BlockIndex } from "../Indexes/BlockIndex";
 import { Mapper } from "../Math/Mapper";
 import { Network } from "../Network/Network";
@@ -12,8 +13,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        console.log("TEST");
-
         if (!Loading.instance.checkBoot("game"))
             Loading.instance.setLoadingValues("game", this);
 
@@ -135,7 +134,6 @@ export class GameScene extends Phaser.Scene {
 
                 case "-":
                     newZoom = this.cameras.main.zoom - .1;
-                    console.log(newZoom);
                     if (newZoom > 0.6) {
                         this.cameras.main.zoom = newZoom;
                     }
@@ -143,14 +141,13 @@ export class GameScene extends Phaser.Scene {
 
                 case "=":
                     newZoom = this.cameras.main.zoom + .1;
-                    console.log(newZoom);
                     if (newZoom < 3) {
                         this.cameras.main.zoom = newZoom;
                     }
                     break;
 
                 default:
-                    console.log(`Unknown key: ${e.key}`);
+                    MainGame.instance.onKeybind(e.key);
                     break;
             }
         });

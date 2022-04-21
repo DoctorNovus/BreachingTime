@@ -16,7 +16,8 @@ export function App() {
     const [username, setUsername] = React.useState("");
     const [selected, setSelected] = React.useState("");
     const [worlds, setWorlds] = React.useState([]);
-    const [character, setCharacter] = React.useState([]);
+    const [character, setCharacter] = React.useState({});
+    const [kb, setKb] = React.useState({ kb : []});
 
     return (
         <div className="main">
@@ -42,7 +43,7 @@ export function App() {
                     </div>
                 </div>
                 <div className={`main-first-game ${loggedIn ? "" : "hidden"}`} onClick={() => {
-                    startGame.bind(this)(setStarted, username, setWorlds);
+                    startGame.bind(this)(setStarted, username, setWorlds, setCharacter, kb, setKb);
                 }}>
                     <img src="/assets/ui/startBG.gif" alt="startBG" />
                     <em id="startButton">Click the screen to start...</em>
@@ -52,7 +53,7 @@ export function App() {
                 <WorldMenu worlds={worlds} setSelected={setSelected} shown={selected.length == 0 ? true : false} />
                 <div className={`${selected.length == 0 ? "hidden" : ""}`}>
                     {/* <ChatBox ref={chatbox} shown={selected.length > 0 ? true : false} /> */}
-                    <Inventory inventory={character.inventory} profile={character.profile} />
+                    <Inventory inventory={character.inventory} profile={character.profile} shown={kb.kb.includes("i")} />
                 </div>
             </div>
         </div>
@@ -125,7 +126,7 @@ export async function register(e, setLoggedIn, setUsername) {
     }
 }
 
-export function startGame(setStarted, username, setWorlds) {
+export function startGame(setStarted, username, setWorlds, setCharacter, keybinds, setKeybindElems) {
     setStarted(true);
 
     let game = new MainGame();
@@ -135,10 +136,26 @@ export function startGame(setStarted, username, setWorlds) {
     };
 
     MainGame.instance.onWorldMenu = (data) => {
-        console.log(data);
         let { worlds } = data;
         setWorlds(worlds);
     };
+
+    MainGame.instance.onInventory = (data) => {
+        let { items, profile } = data;
+        setCharacter({ inventory: items, profile });
+    }
+
+    MainGame.instance.onKeybind = (data) => {
+        let kb = keybinds.kb;
+
+        if (!kb.includes(data)) {
+            kb.push(data);
+        } else {
+            kb.splice(kb.indexOf(data), 1);
+        }
+
+        setKeybindElems({ kb });
+    }
 
     game.start(username);
 }
