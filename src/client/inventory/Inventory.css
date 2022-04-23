@@ -1,3 +1,15 @@
+.inv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .inventory {
   width: 80vw;
   height: 80vh;
@@ -85,6 +97,24 @@
 
 .inventory-items > ul > li {
   flex: 1 0 12.4%;
+}
+
+.hotbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 90%;
+}
+
+.hotbar > div {
+  margin: 1vmax;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0.5rem;
+}
+
+.solo {
+  margin-top: 87.5vh;
 }
 
 .hidden {
