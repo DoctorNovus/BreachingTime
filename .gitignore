@@ -111,3 +111,8 @@ TODO
 zones
 zones/
 zones/**
+
+# Build Files
+server.js
+public/game.js
+public/game.js.map
