@@ -181,6 +181,7 @@ class Player {
         this.y = y;
         this.inventory = [];
         this.slots = [];
+        this.hotbar = [];
         this.level = 1;
         this.world = "";
     }
@@ -210,6 +211,10 @@ class Player {
         this.slots = slots;
     }
     
+    setHotbar(hotbar){
+        this.hotbar = hotbar;
+    }
+    
     constructInventory(){
         return this.inventory || [];
     }
@@ -219,7 +224,8 @@ class Player {
             name: this.name,
             level: this.level,
             world: this.world,
-            slots: this.slots
+            slots: this.slots,
+            hotbar: this.hotbar
         }
     }
 
@@ -231,7 +237,8 @@ class Player {
             inventory: this.inventory,
             level: this.level,
             world: this.world,
-            slots: this.slots
+            slots: this.slots,
+            hotbar: this.hotbar
         }
     }
 }
@@ -922,7 +929,6 @@ class PlayerManager {
     }
 
     savePlayers() {
-        console.log(`Saving ${this.players.length} players`);
         for (let player of this.players) {
             this.savePlayer(player);
         }
@@ -938,7 +944,6 @@ class PlayerManager {
                 Database.instance.users.insertOne({ username: player.name, ...pData });
             }
         } catch (e) {
-            console.log(`Error saving player ${player.name}`);
             console.log(e);
         }
     }
@@ -1321,7 +1326,6 @@ class ZoneManager {
     }
 
     saveZones() {
-        console.log(`Saving ${this.zones.length} zones`);
         for (let zone of this.zones) {
             this.saveZone(zone);
         }
@@ -1558,6 +1562,60 @@ class SocketServer extends Singleton {
                     case "worldCreate":
                         let { name: createName } = data;
                         Boot.instance.handleWorldCreate(this, socket, createName);
+                        break;
+
+                    case "moveSlot":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        if (data.active && data.active.id) {
+                            if (!user.slots)
+                                user.setSlots([].fill({ id: 0, count: 0 }, 0, 6));
+
+                            let slotBottle = user.slots.find(item => item && item.id == data.active.id);
+                            if (slotBottle)
+                                user.slots[user.slots.indexOf(slotBottle)] = { id: 0, count: 0 };
+
+                            user.slots[data.slot - 1] = {
+                                id: data.active.id,
+                                count: user.inventory.find(item => item.id == data.active.id).count
+                            };
+
+                            this.send(user.socket, {
+                                type: "moveSlot",
+                                data: {
+                                    slot: data.slot - 1,
+                                    item: user.slots[data.slot - 1],
+                                    inventory: user.constructInventory(),
+                                    profile: user.constructProfile()
+                                }
+                            });
+                        }
+                        break;
+
+                    case "moveHotbar":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        if (data.active && data.active.id) {
+                            if (!user.hotbar)
+                                user.setHotbar([].fill({ id: 0, count: 0 }, 0, 9));
+
+                            let hotbarBottle = user.hotbar.find(item => item && item.id == data.active.id);
+                            if (hotbarBottle)
+                                user.hotbar[user.hotbar.indexOf(hotbarBottle)] = { id: 0, count: 0 };
+
+                            user.hotbar[data.hotbar - 1] = {
+                                id: data.active.id,
+                                count: user.inventory.find(item => item.id == data.active.id).count
+                            };
+
+                            this.send(user.socket, {
+                                type: "moveHotbar",
+                                data: {
+                                    hotbar: data.hotbar - 1,
+                                    item: user.hotbar[data.hotbar - 1],
+                                    inventory: user.constructInventory(),
+                                    profile: user.constructProfile()
+                                }
+                            });
+                        }
                         break;
 
                     default:

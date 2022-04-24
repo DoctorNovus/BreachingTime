@@ -18,7 +18,6 @@ export class PlayerManager {
     }
 
     savePlayers() {
-        console.log(`Saving ${this.players.length} players`);
         for (let player of this.players) {
             this.savePlayer(player);
         }
@@ -34,7 +33,6 @@ export class PlayerManager {
                 Database.instance.users.insertOne({ username: player.name, ...pData });
             }
         } catch (e) {
-            console.log(`Error saving player ${player.name}`);
             console.log(e);
         }
     }

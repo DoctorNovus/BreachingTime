@@ -6,6 +6,7 @@ export class Player {
         this.y = y;
         this.inventory = [];
         this.slots = [];
+        this.hotbar = [];
         this.level = 1;
         this.world = "";
     }
@@ -35,6 +36,10 @@ export class Player {
         this.slots = slots;
     }
     
+    setHotbar(hotbar){
+        this.hotbar = hotbar;
+    }
+    
     constructInventory(){
         return this.inventory || [];
     }
@@ -44,7 +49,8 @@ export class Player {
             name: this.name,
             level: this.level,
             world: this.world,
-            slots: this.slots
+            slots: this.slots,
+            hotbar: this.hotbar
         }
     }
 
@@ -56,7 +62,8 @@ export class Player {
             inventory: this.inventory,
             level: this.level,
             world: this.world,
-            slots: this.slots
+            slots: this.slots,
+            hotbar: this.hotbar
         }
     }
 }

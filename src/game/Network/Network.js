@@ -121,6 +121,14 @@ export class Network extends Singleton {
                     MainGame.instance.onInventory(data);
                     break;
 
+                case "moveSlot":
+                    MainGame.instance.onSlotChange(data);
+                    break;
+
+                case "moveHotbar":
+                    MainGame.instance.onHotbarChange(data);
+                    break;
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;
@@ -137,6 +145,12 @@ export class Network extends Singleton {
     }
 
     send(data) {
+        try {
         this.socket.send(JSON.stringify(data));
+        } catch (e) {
+            console.log("Error sending data");
+            console.log(data);
+            console.log(e);
+        }
     }
 }

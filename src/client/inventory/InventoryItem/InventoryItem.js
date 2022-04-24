@@ -1,5 +1,6 @@
 import React from "react";
 import { BlockIndex } from "../../../game/Indexes/BlockIndex";
+import { Network } from "../../../game/Network/Network";
 
 import "./InventoryItem.css";
 
@@ -14,7 +15,10 @@ export default function InventoryItem({ item, active, setActive, slot, hotbar })
     }
 
     return (
-        <div className="inventory-slot" id={slot ? `slot${slot}` : hotbar ? `hotbar${hotbar}` : null} onClick={() => handleCurrent(active, setActive, item, slot, hotbar)}>
+        <div className="inventory-slot" id={slot ? `slot${slot}` : hotbar ? `hotbar${hotbar}` : null} onClick={(e) => {
+            e.stopPropagation();
+            handleCurrent(active, setActive, item, slot, hotbar)
+        }}>
             <div className={`${active && active.id && active.id == item.id && active.id != 0 ? "inv-selected" : ""}`}></div>
             <div className="inventory-item-image">
                 {iName && iName.trim().length > 0 ? (
@@ -37,11 +41,25 @@ export default function InventoryItem({ item, active, setActive, slot, hotbar })
 
 function handleCurrent(active, setActive, item, slot, hotbar) {
     if (slot) {
-        console.log("Selected slot");
+        Network.instance.send({
+            type: "moveSlot",
+            data: {
+                item,
+                active,
+                slot
+            }
+        });
     } else if (hotbar) {
-        console.log(`Selected hotbar`);
+        Network.instance.send({
+            type: "moveHotbar",
+            data: {
+                item,
+                active,
+                hotbar
+            }
+        });
     } else {
-        console.log("Selected item");
+        // TODO : Move Inventory
     }
 
     if (item && item.id != 0)

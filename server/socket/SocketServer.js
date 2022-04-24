@@ -156,6 +156,60 @@ export class SocketServer extends Singleton {
                         Boot.instance.handleWorldCreate(this, socket, createName);
                         break;
 
+                    case "moveSlot":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        if (data.active && data.active.id) {
+                            if (!user.slots)
+                                user.setSlots([].fill({ id: 0, count: 0 }, 0, 6));
+
+                            let slotBottle = user.slots.find(item => item && item.id == data.active.id);
+                            if (slotBottle)
+                                user.slots[user.slots.indexOf(slotBottle)] = { id: 0, count: 0 };
+
+                            user.slots[data.slot - 1] = {
+                                id: data.active.id,
+                                count: user.inventory.find(item => item.id == data.active.id).count
+                            };
+
+                            this.send(user.socket, {
+                                type: "moveSlot",
+                                data: {
+                                    slot: data.slot - 1,
+                                    item: user.slots[data.slot - 1],
+                                    inventory: user.constructInventory(),
+                                    profile: user.constructProfile()
+                                }
+                            });
+                        }
+                        break;
+
+                    case "moveHotbar":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        if (data.active && data.active.id) {
+                            if (!user.hotbar)
+                                user.setHotbar([].fill({ id: 0, count: 0 }, 0, 9));
+
+                            let hotbarBottle = user.hotbar.find(item => item && item.id == data.active.id);
+                            if (hotbarBottle)
+                                user.hotbar[user.hotbar.indexOf(hotbarBottle)] = { id: 0, count: 0 };
+
+                            user.hotbar[data.hotbar - 1] = {
+                                id: data.active.id,
+                                count: user.inventory.find(item => item.id == data.active.id).count
+                            };
+
+                            this.send(user.socket, {
+                                type: "moveHotbar",
+                                data: {
+                                    hotbar: data.hotbar - 1,
+                                    item: user.hotbar[data.hotbar - 1],
+                                    inventory: user.constructInventory(),
+                                    profile: user.constructProfile()
+                                }
+                            });
+                        }
+                        break;
+
                     default:
                         console.log("Unknown message type: " + type);
                         break;

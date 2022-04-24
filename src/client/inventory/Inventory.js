@@ -4,7 +4,7 @@ import InventoryItem from "./InventoryItem/InventoryItem";
 
 import "./Inventory.css";
 
-export default function Inventory({ inventory, profile, shown }) {
+export default function Inventory({ inventory, profile, shown, active, setActive }) {
     if (!inventory)
         inventory = new Array(64).fill({ id: 0, count: 0, img: "" });
     else if (inventory.length < 64) {
@@ -21,8 +21,6 @@ export default function Inventory({ inventory, profile, shown }) {
         profile.hotbar = profile.hotbar.concat(new Array(9 - profile.hotbar.length).fill({ id: 0, count: 0, img: "" }));
     }
 
-    let [active, setActive] = useState({});
-
     return (
         <div className="inv">
             <div className={`inventory ${shown ? "" : "hidden"}`}>
@@ -33,10 +31,10 @@ export default function Inventory({ inventory, profile, shown }) {
                     </div>
                     <div className="inventory-profile-build">
                         <div className="inventory-profile-top">
-                            <InventoryItem item={profile.slots && profile.slots.leftHand} active={active} setActive={setActive} slot={1} />
-                            <InventoryItem item={profile.slots && profile.slots.head} active={active} setActive={setActive} slot={2} />
-                            <InventoryItem item={profile.slots && profile.slots.backPiece} active={active} setActive={setActive} slot={3} />
-                            <InventoryItem item={profile.slots && profile.slots.legs} active={active} setActive={setActive} slot={4} />
+                            <InventoryItem item={profile.slots && profile.slots[0]} active={active} setActive={setActive} slot={1} />
+                            <InventoryItem item={profile.slots && profile.slots[1]} active={active} setActive={setActive} slot={2} />
+                            <InventoryItem item={profile.slots && profile.slots[2]} active={active} setActive={setActive} slot={3} />
+                            <InventoryItem item={profile.slots && profile.slots[3]} active={active} setActive={setActive} slot={4} />
                         </div>
                         <div className="inventory-profile-center">
                             <div className="inventory-profile-center-container">
@@ -44,9 +42,9 @@ export default function Inventory({ inventory, profile, shown }) {
                             </div>
                         </div>
                         <div className="inventory-profile-bottom">
-                            <InventoryItem item={profile.slots && profile.slots.rightHand} active={active} setActive={setActive} slot={5} />
-                            <InventoryItem item={profile.slots && profile.slots.chest} active={active} setActive={setActive} slot={6} />
-                            <InventoryItem item={profile.slots && profile.slots.feet} active={active} setActive={setActive} slot={7} />
+                            <InventoryItem item={profile.slots && profile.slots[4]} active={active} setActive={setActive} slot={5} />
+                            <InventoryItem item={profile.slots && profile.slots[5]} active={active} setActive={setActive} slot={6} />
+                            <InventoryItem item={profile.slots && profile.slots[6]} active={active} setActive={setActive} slot={7} />
                         </div>
                     </div>
                 </div>
@@ -66,12 +64,11 @@ export default function Inventory({ inventory, profile, shown }) {
                 {profile.hotbar.map((item, index) => {
                     return (
                         <div key={index}>
-                            <InventoryItem item={item} active={active} setActive={setActive} hotbar={index} />
+                            <InventoryItem item={item} active={active} setActive={setActive} hotbar={index + 1} />
                         </div>
                     )
                 })}
             </div>
         </div>
-
     );
 }

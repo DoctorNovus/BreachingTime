@@ -37,7 +37,6 @@ export class ZoneManager {
     }
 
     saveZones() {
-        console.log(`Saving ${this.zones.length} zones`);
         for (let zone of this.zones) {
             this.saveZone(zone);
         }
