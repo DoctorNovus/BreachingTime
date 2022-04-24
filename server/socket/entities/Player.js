@@ -54,6 +54,27 @@ export class Player {
         }
     }
 
+    hasItem(value){
+        for (let item of this.inventory) {
+            if (item.id == value)
+                return true;
+        }
+
+        return false;
+    }
+
+    takeItem(value, count){
+        for (let item of this.inventory) {
+            if (item.id == value) {
+                item.count -= count;
+                if (item.count <= 0) {
+                    this.inventory.splice(this.inventory.indexOf(item), 1);
+                }
+                return;
+            }
+        }
+    }
+
     asData(){
         return {
             name: this.name,

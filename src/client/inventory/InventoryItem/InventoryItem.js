@@ -1,4 +1,5 @@
 import React from "react";
+import { MainGame } from "../../../game";
 import { BlockIndex } from "../../../game/Indexes/BlockIndex";
 import { Network } from "../../../game/Network/Network";
 
@@ -62,6 +63,8 @@ function handleCurrent(active, setActive, item, slot, hotbar) {
         // TODO : Move Inventory
     }
 
-    if (item && item.id != 0)
+    if (item && item.id != 0) {
         setActive({ id: item.id });
+        MainGame.instance.activeSelector = { id: item.id };
+    }
 }

@@ -129,6 +129,10 @@ export class Network extends Singleton {
                     MainGame.instance.onHotbarChange(data);
                     break;
 
+                case "addBlock":
+                    BaseGame.instance.updates.parts.push({ value: data });
+                    break;
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;
@@ -146,7 +150,7 @@ export class Network extends Singleton {
 
     send(data) {
         try {
-        this.socket.send(JSON.stringify(data));
+            this.socket.send(JSON.stringify(data));
         } catch (e) {
             console.log("Error sending data");
             console.log(data);

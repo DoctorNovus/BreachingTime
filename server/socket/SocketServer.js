@@ -5,6 +5,7 @@ import { Movement } from "./engines/Movement";
 import { Database } from "./database/Database";
 import { UserRegistry } from "../shared/UserRegistry";
 import { ZoneManager } from "./zone/ZoneManager";
+import { Block } from "./zone/Block";
 export class SocketServer extends Singleton {
     constructor(server) {
         super();
@@ -31,6 +32,7 @@ export class SocketServer extends Singleton {
             socket.on("message", async (message) => {
                 let { type, data } = JSON.parse(message);
                 let user = {};
+                let world;
                 switch (type) {
                     case "login":
                         if (UserRegistry.instance.getUser(data.name)) {
@@ -69,7 +71,7 @@ export class SocketServer extends Singleton {
 
                     case "leftInteract":
                         user = this.zoneManager.getPlayerBySocket(socket);
-                        let world = this.zoneManager.zones.find(world => world.name == user.world);
+                        world = this.zoneManager.zones.find(world => world.name == user.world);
                         let interactiveBlock = world.getBlock(data.x, data.y);
                         if (interactiveBlock && interactiveBlock.value != 0) {
                             if (interactiveBlock.heal)
@@ -204,6 +206,43 @@ export class SocketServer extends Singleton {
                                     hotbar: data.hotbar - 1,
                                     item: user.hotbar[data.hotbar - 1],
                                     inventory: user.constructInventory(),
+                                    profile: user.constructProfile()
+                                }
+                            });
+                        }
+                        break;
+
+                    case "interact":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        world = this.zoneManager.zones.find(world => world.name == user.world);
+                        if (!user.hasItem(data.active.id))
+                            return;
+
+                        let blocker = {
+                            x: Math.floor(data.x / 32) + 1,
+                            y: Math.floor(data.y / 32) + 1
+                        };
+
+                        let interactBlock = world.getBlock(blocker.x, blocker.y);
+                        if (!interactBlock) {
+                            let nBlock = new Block(world, blocker.x, blocker.y, 32, 32, data.active ? data.active.id : 0);
+                            world.addBlock(blocker.x, blocker.y, nBlock);
+                            user.takeItem(data.active.id, 1);
+
+                            this.sendToAll({
+                                type: "addBlock",
+                                data: {
+                                    x: nBlock.x,
+                                    y: nBlock.y,
+                                    value: data.active ? data.active.id : 0,
+                                    health: 3
+                                }
+                            }, user.world);
+
+                            this.send(user.socket, {
+                                type: "inventoryUpdate",
+                                data: {
+                                    items: user.constructInventory(),
                                     profile: user.constructProfile()
                                 }
                             });

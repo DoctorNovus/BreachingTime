@@ -89,6 +89,24 @@ export class GameScene extends Phaser.Scene {
 
         Network.instance.setActive(this);
 
+        document.body.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+            return false;
+        });
+
+        this.input.on("pointerdown", (pointer) => {
+            if (pointer.button == 2) {
+                Network.instance.send({
+                    type: "interact",
+                    data: {
+                        x: pointer.worldX,
+                        y: pointer.worldY,
+                        active: MainGame.instance.activeSelector || null
+                    }
+                });
+            }
+        }, this);
+
         InputSystem.instance.linkEvent("keydown", (e) => {
             let newZoom;
             switch (e.key) {
@@ -281,6 +299,9 @@ export class GameScene extends Phaser.Scene {
             update = update.value;
             let bl = BaseGame.instance.blocks.get(update.x, update.y);
             if (bl) {
+                if (!this.scene)
+                    return;
+                    
                 bl.setTexture(BlockIndex.blocks[update.value]);
                 bl.setDepth(-1);
                 if (update.health < 3) {
@@ -303,6 +324,58 @@ export class GameScene extends Phaser.Scene {
                 }
 
                 BaseGame.instance.blocks.set(update.x, update.y, bl);
+
+                BaseGame.instance.updates.parts.splice(BaseGame.instance.updates.parts.indexOf(update), 1);
+            } else {
+                let block = update;
+                let blockName = BlockIndex.blocks[block.value];
+                let bl = this.add.sprite(block.x * 32, block.y * 32, blockName).setInteractive();
+                bl.displayWidth = 32;
+                bl.displayHeight = 32;
+
+                if (BaseGame.instance.anims[`${blockName}`]) {
+                    bl.play(`${blockName}_anim`, 10, true);
+                }
+
+                bl.on("pointerdown", (pointer) => {
+                    switch (pointer.button) {
+                        // Left
+                        case 0:
+                            Network.instance.send({
+                                type: "leftInteract",
+                                data: {
+                                    name: blockName,
+                                    x: block.x,
+                                    y: block.y
+                                }
+                            });
+                            break;
+
+                        // Right
+
+                        case 2:
+                            Network.instance.send({
+                                type: "rightInteract",
+                                data: {
+                                    name: blockName,
+                                    x: block.x,
+                                    y: block.y
+                                }
+                            });
+                            break;
+                    }
+                });
+
+                bl.setDepth(-1);
+                if (typeof block.health != "undefined" && block.health < 3 && block.health > 0) {
+                    bl.cr = this.add.sprite(block.x, block.y, `cracked${3 - block.health}`);
+                }
+
+                if (typeof block.health != "undefined" && block.health <= 0) {
+                    bl.destroy();
+                } else {
+                    BaseGame.instance.blocks.set(block.x, block.y, bl);
+                }
 
                 BaseGame.instance.updates.parts.splice(BaseGame.instance.updates.parts.indexOf(update), 1);
             }
