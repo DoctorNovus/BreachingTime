@@ -130,7 +130,7 @@ export class Network extends Singleton {
                     break;
 
                 case "addBlock":
-                    BaseGame.instance.updates.parts.push({ value: data });
+                    BaseGame.instance.updates.set(data.x, data.y, data);
                     break;
 
                 default:

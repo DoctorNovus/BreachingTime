@@ -219,6 +219,9 @@ export class GameScene extends Phaser.Scene {
         if (!Loading.instance.checkBoot("game"))
             Loading.instance.setLoadingValues("game", this);
 
+        if (!this.scene)
+            return;
+
         let base = BaseGame.instance;
         for (let entity of base.objects.entities) {
             if (entity) {
@@ -233,7 +236,10 @@ export class GameScene extends Phaser.Scene {
                 let block = blockMap.parts[x];
                 if (block) {
                     if (typeof block.health != "undefined" && block.health <= 0)
-                        return;
+                        continue;
+
+                    if (!block.value.value)
+                        continue;
 
                     block = {
                         x: block.x,
@@ -242,6 +248,20 @@ export class GameScene extends Phaser.Scene {
                     };
 
                     let blockName = BlockIndex.blocks[block.value];
+                    if (block.value == 3) {
+                        let hBl = BaseGame.instance.blocks.get(block.x, block.y - 1);
+                        let bBl = BaseGame.instance.blocks.get(block.x, block.y + 1);
+
+                        if (!hBl || (hBl && hBl.texture == 0)) {
+                            blockName = BlockIndex.blocks[2];
+                        }
+
+                        if (bBl && bBl.texture.key == "grass") {
+                            bBl.setTexture("dirt");
+                            BaseGame.instance.blocks.set(block.x, block.y + 1, bBl);
+                        }
+                    }
+
                     let bl = this.add.sprite(block.x * 32, block.y * 32, blockName).setInteractive();
                     bl.displayWidth = 32;
                     bl.displayHeight = 32;
@@ -299,10 +319,54 @@ export class GameScene extends Phaser.Scene {
             update = update.value;
             let bl = BaseGame.instance.blocks.get(update.x, update.y);
             if (bl) {
-                if (!this.scene)
-                    return;
-                    
-                bl.setTexture(BlockIndex.blocks[update.value]);
+                let texture = BlockIndex.blocks[update.value];
+                if (update.value == 3) {
+                    let hBl = BaseGame.instance.blocks.get(update.x, update.y - 1);
+                    let bBl = BaseGame.instance.blocks.get(update.x, update.y + 1);
+
+                    if (!hBl || (hBl && hBl.texture.key == "air")) {
+                        texture = BlockIndex.blocks[2];
+                    }
+
+                    if (bBl && bBl.texture.key == "grass") {
+                        bBl.setTexture("dirt");
+                        BaseGame.instance.blocks.set(update.x, update.y + 1, bBl);
+                    }
+                }
+
+                if (!bl.scene) {
+                    bl = this.add.sprite(update.x * 32, update.y * 32, texture).setInteractive();
+                    bl.on("pointerdown", (pointer) => {
+                        switch (pointer.button) {
+                            // Left
+                            case 0:
+                                Network.instance.send({
+                                    type: "leftInteract",
+                                    data: {
+                                        name: blockName,
+                                        x: block.x,
+                                        y: block.y
+                                    }
+                                });
+                                break;
+
+                            // Right
+
+                            case 2:
+                                Network.instance.send({
+                                    type: "rightInteract",
+                                    data: {
+                                        name: blockName,
+                                        x: block.x,
+                                        y: block.y
+                                    }
+                                });
+                                break;
+                        }
+                    });
+                }
+
+                bl.setTexture(texture);
                 bl.setDepth(-1);
                 if (update.health < 3) {
                     if (!bl.cr) {

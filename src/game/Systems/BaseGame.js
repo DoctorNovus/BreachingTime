@@ -88,6 +88,13 @@ export class BaseGame extends Singleton {
 
             block.destroy();
             this.blocks.parts.splice(this.blocks.parts.indexOf(block), 1);
+            this.updateAround(data.x, data.y);
         }
+    }
+
+    updateAround(x, y) {
+        let b = this.blocks.get(x, y + 1);
+        if (b && b.texture.key == "dirt")
+            b.setTexture("grass");
     }
 }
