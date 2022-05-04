@@ -2,6 +2,7 @@ import React from "react";
 import { MainGame } from "../../../game";
 import { BlockIndex } from "../../../game/Indexes/BlockIndex";
 import { Network } from "../../../game/Network/Network";
+import ReactDOM from "react-dom";
 
 import "./InventoryItem.css";
 
@@ -19,7 +20,7 @@ export default function InventoryItem({ item, active, setActive, slot, hotbar })
         <div className="inventory-slot" id={slot ? `slot${slot}` : hotbar ? `hotbar${hotbar}` : null} onClick={(e) => {
             e.stopPropagation();
             handleCurrent(active, setActive, item, slot, hotbar)
-        }}>
+        }} onContextMenu={(e) => handleContext(e, active, item)}>
             <div className={`${active && active.id && active.id == item.id && active.id != 0 ? "inv-selected" : ""}`}></div>
             <div className="inventory-item-image">
                 {iName && iName.trim().length > 0 ? (
@@ -66,5 +67,20 @@ function handleCurrent(active, setActive, item, slot, hotbar) {
     if (item && item.id != 0) {
         setActive({ id: item.id });
         MainGame.instance.activeSelector = { id: item.id };
+    }
+}
+
+function handleContext(e, active, item) {
+    Network.instance.send({
+        type: "openInvSelect",
+        data: {
+            item
+        }
+    });
+
+    MainGame.instance.onInvSelectOptions = (item) => {
+        item.position = { x: e.clientX, y: e.clientY };
+        MainGame.instance.setOptionsSelected(item);
+        MainGame.instance.setOptionsSeen(true);
     }
 }

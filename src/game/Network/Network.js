@@ -133,6 +133,10 @@ export class Network extends Singleton {
                     BaseGame.instance.updates.set(data.x, data.y, data);
                     break;
 
+                case "invSelectOptions":
+                    MainGame.instance.onInvSelectOptions(data);
+                    break;
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;

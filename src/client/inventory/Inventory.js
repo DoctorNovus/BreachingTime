@@ -3,8 +3,13 @@ import CharacterBuild from "./CharacterBuild/CharacterBuild";
 import InventoryItem from "./InventoryItem/InventoryItem";
 
 import "./Inventory.css";
+import { MainGame } from "../../game";
+import { Network } from "../../game/Network/Network";
 
 export default function Inventory({ inventory, profile, shown, active, setActive }) {
+    let [selected, setSelected] = useState(null);
+    let [seen, setSeen] = useState(false);
+
     if (!inventory)
         inventory = new Array(64).fill({ id: 0, count: 0, img: "" });
     else if (inventory.length < 64) {
@@ -20,6 +25,9 @@ export default function Inventory({ inventory, profile, shown, active, setActive
     if (profile.hotbar.length < 9) {
         profile.hotbar = profile.hotbar.concat(new Array(9 - profile.hotbar.length).fill({ id: 0, count: 0, img: "" }));
     }
+
+    MainGame.instance.setOptionsSelected = setSelected;
+    MainGame.instance.setOptionsSeen = setSeen;
 
     return (
         <div className="inv">
@@ -68,6 +76,28 @@ export default function Inventory({ inventory, profile, shown, active, setActive
                         </div>
                     )
                 })}
+            </div>
+            <div className={`option-selector ${seen ? "" : "hidden"}`}>
+                <ul className="inv-options" style={{ position: "absolute", left: (selected && selected.position && selected.position.x || 0) + "px", top: (selected && selected.position && selected.position.y || 0) + "px" }}>
+                    {selected && selected.options && selected.options.map((option, index) => {
+                        return (
+                            <li key={index} className="inv-option-info" onClick={() => {
+                                Network.instance.send({
+                                    type: "itemOptionSelect",
+                                    data: {
+                                        item: selected,
+                                        option: option
+                                    }
+                                });
+
+                                MainGame.instance.setOptionsSeen(false);
+
+                            }}>
+                                <span>{option.name}</span>
+                            </li>
+                        );
+                    })}
+                </ul>
             </div>
         </div>
     );

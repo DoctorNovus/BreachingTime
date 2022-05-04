@@ -6,6 +6,7 @@ import { Database } from "./database/Database";
 import { UserRegistry } from "../shared/UserRegistry";
 import { ZoneManager } from "./zone/ZoneManager";
 import { Block } from "./zone/Block";
+import { ItemOptionsRegistry } from "./registry/ItemOptionsRegistry";
 export class SocketServer extends Singleton {
     constructor(server) {
         super();
@@ -249,6 +250,20 @@ export class SocketServer extends Singleton {
                         }
                         break;
 
+                    case "openInvSelect":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        this.send(user.socket, {
+                            type: "invSelectOptions",
+                            data: {
+                                ...(ItemOptionsRegistry.getOptions(data.item) || {})
+                            }
+                        });
+                        break;
+
+                        case "itemOptionSelect":
+                    ItemOptionsRegistry.applyItemOption(data.item, data.option);
+                    break;
+
                     default:
                         console.log("Unknown message type: " + type);
                         break;
@@ -282,6 +297,9 @@ export class SocketServer extends Singleton {
     }
 
     send(socket, data) {
+        if (!socket)
+            return;
+
         if (data.asData) {
             if (data instanceof Zone) {
                 let zData = data.asData();

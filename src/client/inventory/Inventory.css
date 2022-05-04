@@ -95,6 +95,8 @@
   border-radius: 0.5rem;
   padding: 1rem;
   flex-wrap: wrap;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 .inventory-items > ul > li {
@@ -122,4 +124,17 @@
 
 .hidden {
   display: none;
+}
+
+.inv-options {
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid goldenrod;
+  color: white;
+  padding: 1rem;
+  pointer-events: all;
 }
