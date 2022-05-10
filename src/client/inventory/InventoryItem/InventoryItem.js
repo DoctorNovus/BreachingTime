@@ -17,11 +17,12 @@ export default function InventoryItem({ item, active, setActive, slot, hotbar })
     }
 
     return (
-        <div className="inventory-slot" id={slot ? `slot${slot}` : hotbar ? `hotbar${hotbar}` : null} onClick={(e) => {
+        <div className={`inventory-${slot ? "slot" : hotbar ? "hotbar" : "item"}`} id={slot ? `slot${slot}` : hotbar ? `hotbar${hotbar}` : null} onClick={(e) => {
             e.stopPropagation();
             handleCurrent(active, setActive, item, slot, hotbar)
         }} onContextMenu={(e) => handleContext(e, active, item)}>
-            <div className={`${active && active.id && active.id == item.id && active.id != 0 ? "inv-selected" : ""}`}></div>
+            <img className="inv-slot-bg" src="/assets/ui/inventory2.png" alt="inv-slot" />
+            {/* <div className={`${active && active.id && active.id == item.id && active.id != 0 ? "inv-selected" : ""}`}></div> */}
             <div className="inventory-item-image">
                 {iName && iName.trim().length > 0 ? (
                     <img src={`assets/blocks/${iName}.png`} alt="slotItem" />

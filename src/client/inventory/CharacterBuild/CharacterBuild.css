@@ -1,7 +1,6 @@
-.character-showcase {
+/* .character-showcase {
     width: 27vw;
     height: 55vh;
-    border: 1px solid goldenrod;
 }
 
 .character-showcase-base {
@@ -10,10 +9,38 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    background: rgb(80 80 80 / 25%);
 }
 
 .character-showcase img {
     width: 60%;
     height: 75%;
     image-rendering: pixelated;
+} */
+
+.character-showcase {
+  width: 100%;
+  height: 100%;
+}
+
+.character-showcase-bg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  z-index: -1;
+}
+
+.character-showcase-base {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.character-showcase-base img {
+  width: 70%;
+  height: 80%;
+  image-rendering: pixelated;
 }

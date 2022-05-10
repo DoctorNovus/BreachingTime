@@ -33,30 +33,46 @@ export default function Inventory({ inventory, profile, shown, active, setActive
         <div className="inv">
             <div className={`inventory ${shown ? "" : "hidden"}`}>
                 <div className="inventory-profile">
+                    <img className="inventory-profile-bg" src="/assets/ui/inventory0.png" alt="inv-prof-bg" />
                     <div className="inventory-profile-name">
                         <span>{profile.name || "No Name"}</span>
                         <span>Lvl. {profile.level || 1}</span>
                     </div>
                     <div className="inventory-profile-build">
-                        <div className="inventory-profile-top">
-                            <InventoryItem item={profile.slots && profile.slots[0]} active={active} setActive={setActive} slot={1} />
-                            <InventoryItem item={profile.slots && profile.slots[1]} active={active} setActive={setActive} slot={2} />
-                            <InventoryItem item={profile.slots && profile.slots[2]} active={active} setActive={setActive} slot={3} />
-                            <InventoryItem item={profile.slots && profile.slots[3]} active={active} setActive={setActive} slot={4} />
-                        </div>
-                        <div className="inventory-profile-center">
-                            <div className="inventory-profile-center-container">
-                                <CharacterBuild profile={profile} />
+                        <div className="inv-prof-upper">
+                            <div className="inventory-profile-left">
+                                <div className="inventory-profile-left-container">
+                                    <InventoryItem item={profile.slots && profile.slots[0]} active={active} setActive={setActive} slot={1} />
+                                    <InventoryItem item={profile.slots && profile.slots[1]} active={active} setActive={setActive} slot={2} />
+                                    <InventoryItem item={profile.slots && profile.slots[2]} active={active} setActive={setActive} slot={3} />
+                                    <InventoryItem item={profile.slots && profile.slots[3]} active={active} setActive={setActive} slot={4} />
+                                </div>
+                            </div>
+                            <div className="inventory-profile-center">
+                                <div className="inventory-profile-center-container">
+                                    <CharacterBuild profile={profile} />
+                                </div>
+                            </div>
+                            <div className="inventory-profile-right">
+                                <div className="inventory-profile-right-container">
+                                    <InventoryItem item={profile.slots && profile.slots[0]} active={active} setActive={setActive} slot={5} />
+                                    <InventoryItem item={profile.slots && profile.slots[1]} active={active} setActive={setActive} slot={6} />
+                                    <InventoryItem item={profile.slots && profile.slots[2]} active={active} setActive={setActive} slot={7} />
+                                    <InventoryItem item={profile.slots && profile.slots[3]} active={active} setActive={setActive} slot={8} />
+                                </div>
                             </div>
                         </div>
-                        <div className="inventory-profile-bottom">
-                            <InventoryItem item={profile.slots && profile.slots[4]} active={active} setActive={setActive} slot={5} />
-                            <InventoryItem item={profile.slots && profile.slots[5]} active={active} setActive={setActive} slot={6} />
-                            <InventoryItem item={profile.slots && profile.slots[6]} active={active} setActive={setActive} slot={7} />
+                        <div className="inv-prof-lower">
+                            <div className="inventory-profile-bottom">
+                                <InventoryItem item={profile.slots && profile.slots[4]} active={active} setActive={setActive} slot={9} />
+                                <InventoryItem item={profile.slots && profile.slots[5]} active={active} setActive={setActive} slot={10} />
+                                <InventoryItem item={profile.slots && profile.slots[6]} active={active} setActive={setActive} slot={11} />
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="inventory-items">
+                    <img src="/assets/ui/inventory3.png" alt="inv-items-bg" />
                     <ul>
                         {inventory.map((item, index) => {
                             return (

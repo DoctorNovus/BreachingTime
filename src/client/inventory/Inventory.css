@@ -1,140 +1,188 @@
 .inv {
-  pointer-events: none;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 100vw;
   height: 100vh;
-  position: absolute;
-  top: 0;
-  left: 0;
+  align-items: center;
+  justify-content: center;
 }
 
 .inventory {
-  pointer-events: all;
-  width: 80vw;
-  height: 80vh;
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 1vw;
-  border: 5px solid goldenrod;
-  border-radius: 0.5rem;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .inventory-profile {
-  width: 40%;
+  display: flex;
+  flex-direction: column;
+  width: 25vw;
+  height: 55vh;
+  position: absolute;
+  top: 25vh;
+  left: 20vw;
+}
+
+.inventory-profile-bg {
+  width: 100%;
   height: 100%;
-  border: 2px solid goldenrod;
-  display: grid;
-  grid-template-rows: 5% 95%;
-  border-radius: 1rem;
+  position: absolute;
+  z-index: -1;
 }
 
 .inventory-profile-name {
-  color: white;
-  display: grid;
-  grid-template-columns: 65% 35%;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  text-align: center;
-  border-bottom: 1px solid goldenrod;
-  align-items: center;
-  font-size: 24px;
-}
-
-.inventory-profile-top {
+  width: 100%;
+  height: 4%;
   display: flex;
   flex-direction: row;
+  position: absolute;
   justify-content: space-around;
+  top: 0.6rem;
+  font-size: 13px;
+  color: white;
+}
+
+.inventory-profile-build {
+  width: 100%;
+  height: 96%;
+  position: absolute;
+  top: 4%;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  height: 10%;
-  margin-top: 1vh;
+}
+
+.inv-prof-upper {
+  width: 94%;
+  height: 85%;
+  position: relative;
+}
+
+.inventory-profile-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  position: absolute;
+  top: 5%;
+  height: 100%;
+  width: 20%;
+}
+
+.inventory-profile-left-container {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  grid-gap: 2rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 80%;
+  width: 80%;
+}
+
+.inv-prof-lower {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 94%;
+  height: 13%;
+  position: relative;
+  padding: 1rem 0rem 1rem 0rem;
+}
+
+.inventory-profile-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 2rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 80%;
+  width: 65%;
 }
 
 .inventory-profile-center {
   display: flex;
-  height: calc(80% - 2vh - 2rem);
-  padding: 1rem;
-  width: calc(100% - 2rem);
-  border-radius: 2rem;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  position: absolute;
+  top: 7%;
+  height: 95%;
+  width: 60%;
+  left: 20%;
 }
 
 .inventory-profile-center-container {
-  width: 27vw;
-  height: 55vh;
-  border: 1px solid goldenrod;
+  width: 100%;
+  height: 100%;
 }
 
-.inventory-profile-bottom {
+.inventory-profile-right {
   display: flex;
-  flex-direction: row;
-  justify-content: space-around;
+  flex-direction: column;
+  justify-content: space-evenly;
   align-items: center;
-  height: 10%;
-  margin-bottom: 1vh;
+  position: absolute;
+  top: 5%;
+  height: 100%;
+  width: 20%;
+  right: 0%;
+}
+
+.inventory-profile-right-container {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  grid-gap: 2rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 80%;
+  width: 80%;
 }
 
 .inventory-items {
-  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 45vw;
+  height: 60vh;
+  position: absolute;
+  top: 25vh;
+  left: 45vw;
+}
+
+.inventory-items > img {
+  position: absolute;
+  width: 100%;
   height: 100%;
-  display: flex;
-  border: 2px solid goldenrod;
-  align-items: center;
-  justify-content: center;
-  border-radius: 1rem;
-  margin-left: 2rem;
+  z-index: -1;
 }
 
-.inventory-items > ul {
-  display: flex;
-  width: 90%;
-  height: 90%;
-  border: 1px solid goldenrod;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  flex-wrap: wrap;
-  overflow-y: scroll;
+.inventory-items ul {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-gap: 1rem;
+  width: 89%;
+  height: 87%;
   overflow-x: hidden;
+  overflow-y: scroll;
 }
 
-.inventory-items > ul > li {
-  flex: 1 0 12.4%;
-}
-
-.hotbar {
-  pointer-events: all;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: 90%;
-}
-
-.hotbar > div {
-  margin: 1vmax;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 0.5rem;
-}
-
-.solo {
-  margin-top: 87.5vh;
+.inventory-items ul li {
+  width: 100%;
+  height: 100%;
 }
 
 .hidden {
   display: none;
-}
-
-.inv-options {
-  width: fit-content;
-  height: fit-content;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-  border: 1px solid goldenrod;
-  color: white;
-  padding: 1rem;
-  pointer-events: all;
 }
