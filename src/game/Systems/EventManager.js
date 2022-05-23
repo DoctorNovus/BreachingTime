@@ -73,6 +73,10 @@ export class EventManager extends Singleton {
                 type: "single"
             },
             {
+                key: "sign",
+                type: "single"
+            },
+            {
                 key: "cracked1",
                 type: "single",
                 overlay: true,

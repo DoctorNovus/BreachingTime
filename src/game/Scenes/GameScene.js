@@ -95,6 +95,7 @@ export class GameScene extends Phaser.Scene {
         });
 
         this.input.on("pointerdown", (pointer) => {
+            console.log(MainGame.instance.activeSelector);
             if (pointer.button == 2) {
                 Network.instance.send({
                     type: "interact",
@@ -162,6 +163,13 @@ export class GameScene extends Phaser.Scene {
                     if (newZoom < 3) {
                         this.cameras.main.zoom = newZoom;
                     }
+                    break;
+
+                case "Escape":
+                    Network.instance.send({
+                        type: "settingsOptions",
+                        data: {}
+                    });
                     break;
 
                 default:

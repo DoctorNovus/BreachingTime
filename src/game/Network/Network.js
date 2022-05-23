@@ -137,6 +137,19 @@ export class Network extends Singleton {
                     MainGame.instance.onInvSelectOptions(data);
                     break;
 
+                case "settingsOptions":
+                    MainGame.instance.onSettingsOptions(data);
+                    break;
+
+                case "signData":
+                    uText = Network.instance.game.add.text(data.x * 32, data.y * 32, data.text, {
+                        font: "16px Arial",
+                        fill: "#ffffff",
+                        align: "center"
+                    });
+                    console.log(uText);
+                    break;
+
                 default:
                     console.log(`Unknown message type: ${type}`);
                     break;

@@ -15,6 +15,7 @@ export class BlockIndex {
         12: "silver",
         13: "zinc",
         14: "fabricator",
+        15: "sign"
     };
 
     static get blocks () {

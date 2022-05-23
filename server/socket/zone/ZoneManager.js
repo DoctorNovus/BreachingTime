@@ -67,7 +67,8 @@ export class ZoneManager {
                         y: b.y,
                         width: b.width,
                         height: b.height,
-                        value: b.value
+                        value: b.value,
+                        extra: b.extra ? b.extra : null
                     });
                 });
 

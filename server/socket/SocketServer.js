@@ -7,6 +7,7 @@ import { UserRegistry } from "../shared/UserRegistry";
 import { ZoneManager } from "./zone/ZoneManager";
 import { Block } from "./zone/Block";
 import { ItemOptionsRegistry } from "./registry/ItemOptionsRegistry";
+import { SettingsOptionRegistry } from "./registry/SettingsOptionRegistry";
 export class SocketServer extends Singleton {
     constructor(server) {
         super();
@@ -216,6 +217,8 @@ export class SocketServer extends Singleton {
                     case "interact":
                         user = this.zoneManager.getPlayerBySocket(socket);
                         world = this.zoneManager.zones.find(world => world.name == user.world);
+                        console.log(data.active.id);
+                        console.log(user.hasItem(data.active.id));
                         if (!user.hasItem(data.active.id))
                             return;
 
@@ -225,6 +228,7 @@ export class SocketServer extends Singleton {
                         };
 
                         let interactBlock = world.getBlock(blocker.x, blocker.y);
+                        console.log(interactBlock);
                         if (!interactBlock) {
                             let nBlock = new Block(world, blocker.x, blocker.y, 32, 32, data.active ? data.active.id : 0);
                             world.addBlock(blocker.x, blocker.y, nBlock);
@@ -260,9 +264,23 @@ export class SocketServer extends Singleton {
                         });
                         break;
 
-                        case "itemOptionSelect":
-                    ItemOptionsRegistry.applyItemOption(data.item, data.option);
-                    break;
+                    case "itemOptionSelect":
+                        ItemOptionsRegistry.applyItemOption(data.item, data.option);
+                        break;
+
+                    case "settingsOptions":
+                        user = this.zoneManager.getPlayerBySocket(socket);
+                        this.send(user.socket, {
+                            type: "settingsOptions",
+                            data: {
+                                ...(SettingsOptionRegistry.getOptions(data.option) || {})
+                            }
+                        });
+                        break;
+
+                    case "settingsOptionSelect":
+                        SettingsOptionRegistry.applySettingsOption(data.item, data.option);
+                        break;
 
                     default:
                         console.log("Unknown message type: " + type);

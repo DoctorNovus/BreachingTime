@@ -1,3 +1,4 @@
+import { ItemTypeRegistry } from "../registry/ItemTypeRegistry";
 import { Rectangle } from "../shapes/Rectangle";
 
 export class Movement {
@@ -5,8 +6,9 @@ export class Movement {
         this.queue = [];
     }
 
-    checkCollision(rect, zone) {
+    checkCollision(rect, zone, net, user) {
         let collides = false;
+        let sign = false;
         if (!zone)
             return;
 
@@ -15,25 +17,56 @@ export class Movement {
 
         for (let tile of bb) {
             let tRect = new Rectangle(tile.x * 32, tile.y * 32, tile.value.width, tile.value.height);
-            if(tile.value.value == (0 || 1))
-                tile.layer = "background";
-
-            if (tile.layer) {
-                if (tile.layer == ("foreground")) {
-                    if (rect.overlaps(tRect)) {
-                        collides = true;
+            let index = ItemTypeRegistry.getByItem(tile.value.value);
+            if (rect.overlaps(tRect)) {
+                if (index.passthrough) {
+                    if (index.id == "signs") {
+                        this.applySign(net, user, tile);
+                        sign = true;
                     }
-                }
-            } else {
-                if (rect.overlaps(tRect))
+
+                    continue;
+                } else {
                     collides = true;
+                    break;
+                }
             }
         }
 
         if (rect.x < 0 || rect.x > (zone.width * 32) - 32 || rect.y < (-1 * zone.height * 32) || rect.y > zone.height * 32)
             collides = true;
 
+        if (!sign) {
+            net.send(user.socket, {
+                type: "removeSignData",
+                data: user.signData
+            });
+
+            user.signData = null;
+        }
+
         return collides;
+    }
+
+    applySign(net, user, tile) {
+        let val = tile.value;
+        if (val.extra && val.extra.signData) {
+            if (!user.signData || (user.signData && user.signData.text != val.extra.signData))
+                net.send(user.socket, {
+                    type: "signData",
+                    data: {
+                        x: tile.x,
+                        y: tile.y,
+                        text: val.extra.signData
+                    }
+                });
+
+            user.signData = {
+                x: tile.x,
+                y: tile.y,
+                text: val.extra.signData
+            };
+        }
     }
 
     runMovementQueue(net) {
@@ -72,7 +105,7 @@ export class Movement {
                 rect.y += que.y * speed;
 
                 let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
-                if (this.checkCollision(rect, zone)) {
+                if (this.checkCollision(rect, zone, net, user)) {
                     rect.setPosition(user.x, user.y);
                     return;
                 }
@@ -128,7 +161,7 @@ export class Movement {
                         rect.setPosition(user.x, user.y + fallSpeed);
 
                         let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
-                        if (this.checkCollision(rect, zone)) {
+                        if (this.checkCollision(rect, zone, net, user)) {
                             rect.setPosition(user.x, user.y);
                             if (!user.grounded) {
                                 net.sendToAll({
@@ -186,7 +219,7 @@ export class Movement {
                 rect.setPosition(user.x, user.y + 1);
 
                 let zone = net.zoneManager.zones.find(zone => zone.name == user.world);
-                if (this.checkCollision(rect, zone)) {
+                if (this.checkCollision(rect, zone, net, user)) {
                     rect.setPosition(user.x, user.y);
                     if (!user.grounded) {
                         net.sendToAll({
