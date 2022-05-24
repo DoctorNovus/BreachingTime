@@ -147,7 +147,13 @@ export class Network extends Singleton {
                         fill: "#ffffff",
                         align: "center"
                     });
-                    console.log(uText);
+                    
+                    BaseGame.instance.signData = uText;
+                    break;
+
+                case "removeSignData":
+                    if (BaseGame.instance.signData)
+                        BaseGame.instance.signData.destroy();
                     break;
 
                 default:

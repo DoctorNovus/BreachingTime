@@ -46,7 +46,7 @@ export function App() {
                 <div className={`main-first-game ${loggedIn ? "" : "hidden"}`} onClick={() => {
                     startGame.bind(this)(setStarted, username, setSelected, setWorlds, character, setCharacter, kb, setKb, active, setActive);
                 }}>
-                    <img src="/assets/ui/startBG.gif" alt="startBG" />
+                    <img src="/assets/ui/startBG.png" alt="startBG" />
                     <em id="startButton">Click the screen to start...</em>
                 </div>
             </div>

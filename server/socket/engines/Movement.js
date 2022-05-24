@@ -8,21 +8,26 @@ export class Movement {
 
     checkCollision(rect, zone, net, user) {
         let collides = false;
-        let sign = false;
+        let inSign = false;
+
         if (!zone)
             return;
 
         let blocks = zone.blocks;
         let bb = blocks.parts || blocks;
 
+        let ct = 0;
+
         for (let tile of bb) {
+            ct++;
+
             let tRect = new Rectangle(tile.x * 32, tile.y * 32, tile.value.width, tile.value.height);
             let index = ItemTypeRegistry.getByItem(tile.value.value);
             if (rect.overlaps(tRect)) {
                 if (index.passthrough) {
                     if (index.id == "signs") {
                         this.applySign(net, user, tile);
-                        sign = true;
+                        inSign = true;
                     }
 
                     continue;
@@ -31,25 +36,46 @@ export class Movement {
                     break;
                 }
             }
+
+            if (ct == bb.length - 1) {
+                if (!inSign && user.signData) {
+                    net.send(user.socket, {
+                        type: "removeSignData",
+                        data: user.signData
+                    });
+
+                    user.signData = null;
+                }
+            }
+
         }
 
         if (rect.x < 0 || rect.x > (zone.width * 32) - 32 || rect.y < (-1 * zone.height * 32) || rect.y > zone.height * 32)
             collides = true;
-
-        if (!sign) {
-            net.send(user.socket, {
-                type: "removeSignData",
-                data: user.signData
-            });
-
-            user.signData = null;
-        }
 
         return collides;
     }
 
     applySign(net, user, tile) {
         let val = tile.value;
+
+        let nData = {
+            x: tile.x,
+            y: tile.y,
+            text: val.extra.signData
+        };
+
+        if (user.signData)
+            if (user.signData.x == nData.x && user.signData.y == nData.y && user.signData.text == nData.text)
+                return;
+
+        // if (user.signData) {
+        //     net.send(user.socket, {
+        //         type: "removeSignData",
+        //         data: user.signData
+        //     });
+        // }
+
         if (val.extra && val.extra.signData) {
             if (!user.signData || (user.signData && user.signData.text != val.extra.signData))
                 net.send(user.socket, {
@@ -61,11 +87,7 @@ export class Movement {
                     }
                 });
 
-            user.signData = {
-                x: tile.x,
-                y: tile.y,
-                text: val.extra.signData
-            };
+            user.signData = nData;
         }
     }
 
